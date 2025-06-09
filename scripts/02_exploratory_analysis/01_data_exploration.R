@@ -162,7 +162,7 @@ panel_b <- ggplot(detection_summary, aes(x = Method, y = n, fill = Type)) +
     legend.position = "bottom"
   ) +
   labs(
-    title = "B) Infection Detection Pipeline",
+    #title = "B) Infection Detection Pipeline",
     x = "Detection Method",
     y = "Number of mice",
     fill = "Method Type"
@@ -335,6 +335,23 @@ gt_supp_table
 save_table_all_formats(gt_supp_table, table_name = "Sex_Infection_model_results")
 
 
+model_data <- bind_rows(wl_model_tidy, hi_model_tidy) %>%
+  filter(term != "(Intercept)") %>%
+  mutate(
+    term = case_when(
+      term == "SexM" ~ "Male sex",
+      term == "infection_statusTRUE" ~ "Infected (vs. uninfected)",
+      TRUE ~ term
+    ),
+    p_signif = case_when(
+      p.value < 0.001 ~ "***",
+      p.value < 0.01 ~ "**",
+      p.value < 0.05 ~ "*",
+      TRUE ~ ""
+    )
+  )
+
+# Create the coefficient plot
 model_data_clean <- model_data %>%
   mutate(
     Response = model,
@@ -350,6 +367,32 @@ model_data_clean <- model_data %>%
       TRUE ~ "black"
     )
   )
+
+# Create coefficient plot
+coeff_plot <- ggplot(model_data_clean, aes(x = estimate, y = Variable, color = Variable)) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray50") +
+  geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error),
+                 height = 0.2, size = 1) +
+  geom_point(size = 3) +
+  facet_wrap(~Response, scales = "free_x") +
+  scale_color_manual(values = c(
+    "Infected with *Eimeria* spp." = infection_status_colors["Infected with Eimeria spp."],
+    "Male" = sex_colors["Male"]
+  )) +
+  labs(
+    x = "Effect size (estimate ± SE)",
+    y = NULL,
+    title = "Effects of Sex and Infection on Health Outcomes"
+  ) +
+  theme_classic(base_size = 12) +
+  theme(
+    legend.position = "none",
+    strip.text = element_text(size = 12, face = "bold"),
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title.x = element_text(size = 13)
+  )
+
+print(coeff_plot)
 
 
 Sex_Infection_model_plot <-

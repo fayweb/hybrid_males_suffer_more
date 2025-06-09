@@ -67,6 +67,7 @@ required_packages <- c(
   "multcomp",       # Multiple comparisons
   "lme4",           # Mixed-effects models
   "performance",    # Model diagnostics
+  "emmeans",
 
   # Multivariate analysis
   "FactoMineR",     # PCA analysis
@@ -90,6 +91,11 @@ required_packages <- c(
   "ggbeeswarm",     # Bee swarm plots
   "ggsignif",       # Significance brackets
   "ggeffects",      # Effect plots
+  "gt",
+  "glue",
+  "forcats",
+  "ggrepel",
+  "ggtext",
 
   # File I/O and utilities
   "readr",          # Fast file reading
@@ -98,7 +104,16 @@ required_packages <- c(
   "forcats",        # Factor manipulation
 
   # Hybrid analysis framework
-  "parasiteLoad"    # Alice Balard's hybrid analysis framework (NO COMMA!)
+  "parasiteLoad",    # Alice Balard's hybrid analysis framework (NO COMMA!)
+
+  # Maps
+  "sf",
+  "rnaturalearth",
+  "rnaturalearthdata",
+  "ggspatial",
+  "viridis",
+  "ggmap",
+  "rosm"
 )
 
 # Function to install and load packages
@@ -161,21 +176,36 @@ theme_set(theme_classic() +
 
 # Color palettes for consistent visualization
 hybrid_colors <- c(
-  "M.m.domesticus" = "#E31A1C",      # Red
-  "Hybrid" = "#1F78B4",              # Blue
-  "M.m.musculus" = "#33A02C"         # Green
+  "M.m.domesticus" = "firebrick1",      # Red
+  "Hybrid" = "purple",              # Blue
+  "M.m.musculus" = "blue"         # Green
 )
 
 sex_colors <- c(
-  "Male" = "#FF7F00",                # Orange
-  "Female" = "#6A3D9A"               # Purple
+  "Female" = "#4daf4a",   # Green
+  "Male"   = "#ff7f00"    # Orange
 )
 
+
 infection_colors <- c(
-  "Uninfected" = "#999999",          # Gray
-  "E. ferrisi" = "#F781BF",          # Pink
-  "E. falciformis" = "#A65628"       # Brown
+  "Uninfected"       = "#A6CEE3",   # Light blue
+  "E. ferrisi"        = "#FF8EE0",   # Soft pink
+  "E. falciformis"    = "#FF197A"    # Darker pink/purple
 )
+
+
+infection_status_colors <- c(
+  "Uninfected" = "#A6CEE3",  # Soft light blue
+  "Infected with Eimeria spp." = "#FF7094"  # Medium pink
+)
+
+
+
+infection_factors <- c("Uninfected",
+                     "E. ferrisi",
+                     "E. falciformis")
+
+infection_presence_factors <- c("FALSE", "TRUE")
 
 # Gene names (19 immune genes from Chapter 1)
 immune_genes <- c(
@@ -347,8 +377,14 @@ if (RUN_ANALYSIS$data_loading) {
 # 2. EXPLORATORY ANALYSIS
 if (RUN_ANALYSIS$exploratory_analysis) {
   print_section("EXPLORATORY ANALYSIS")
-  # Scripts will be created in scripts/02_exploratory_analysis/
-  cat("Ready for exploratory analysis modules\n")
+
+  # Run Figure 1 data exploration and overview
+  cat("Running data exploration and Figure 1 generation...\n")
+  source(file.path("scripts", "02_exploratory_analysis", "01_data_exploration.R"))
+  cat("✓ Data exploration completed\n")
+  cat("✓ Figure 1 panels created and saved\n")
+  cat("✓ Statistical models for sex/infection effects completed\n")
+  cat("✓ Summary tables generated\n\n")
 }
 
 # 3. STATISTICAL MODELS
