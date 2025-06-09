@@ -174,18 +174,4 @@ Webster, F., Heitlinger, E., et al. (2024). Hybrid males suffer more: Sex-specif
 **Related Work:**
 Webster, F., et al. (2024). Bridging controlled and natural systems: Immune markers allow assessment of parasite infection health effects in the wild. [Chapter 1 - submitted]
 
-## Contact
 
-**Fay Webster**  
-Email: [fay.webster@hu-berlin.de]  
-GitHub: [@fayweb](https://github.com/fayweb)
-
-## Acknowledgments
-
-- Research Training Group 2046 "Parasite Infections: From Experimental Models to Natural Systems" (DFG)
-- Chapter 1 collaborators and data collection teams
-- Wild mouse sampling and laboratory analysis teams
-
----
-
-*Last updated: June 9, 2025*
