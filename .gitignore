@@ -1,0 +1,49 @@
+# R specific files
+.Rhistory
+.Rapp.history
+.RData
+.Ruserdata
+.Rproj.user/
+
+# R temporary files
+*~
+*.tmp
+*.temp
+
+# Large data files (adjust as needed)
+*.csv
+*.xlsx
+*.xls
+*.rds
+*.RData
+data/raw/*
+!data/raw/.gitkeep
+!data/raw/README.md
+
+# But allow processed data to be tracked
+!data/processed/
+!data/metadata/
+
+# Output files
+results/analysis_workspace.RData
+*.log
+
+# OS specific files
+.DS_Store
+
+ls -la
+
+q
+
+q
+
+
+
+
+:q
+
+
+^dsad
+
+# Try pressing Ctrl+C to cancel the current command
+# Then try:
