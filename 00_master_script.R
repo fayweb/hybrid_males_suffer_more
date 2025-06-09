@@ -2,42 +2,399 @@
 # MASTER SCRIPT: Hybrid Males Suffer More - Chapter 2 Analysis
 # ==============================================================================
 # Project: Tolerance of hybrid hosts against infections
+# Chapter: 2 - Hybrid inflammation and sex-specific infection tolerance
 # Author: Fay Webster
 # Institution: Humboldt-University Berlin & Leibniz Institute for Zoo and Wildlife Research
+#
+# Description: Master script for Chapter 2 analysis examining how genetic
+# admixture affects immune responses and tolerance to Eimeria infections in
+# wild mice, with focus on sex-specific differences. Builds on Chapter 1
+# validated Random Forest model and processed field data.
+#
+# Data Integration: Uses analysis-ready datasets from Chapter 1 pipeline
+# - field_mice_complete.csv: 336 wild mice with predictions
+# - chapter1_rf_model.rds: Validated Random Forest model
+# - utility_functions.R: Custom analysis functions
+# ==============================================================================
 
 # Clear workspace
 rm(list = ls())
 gc()
 
-# Required packages
-required_packages <- c(
-  "tidyverse", "FactoMineR", "factoextra", "randomForest",
-  "ggplot2", "patchwork", "broom", "car"
+# ==============================================================================
+# PROJECT SETUP & CONFIGURATION
+# ==============================================================================
+
+# Set project root (automatically detects if using RStudio project)
+if (rstudioapi::isAvailable()) {
+  project_root <- dirname(rstudioapi::getActiveDocumentContext()$path)
+} else {
+  project_root <- getwd()
+}
+
+# Create directory structure if it doesn't exist
+required_dirs <- c(
+  "data/processed",
+  "scripts/01_data_preparation",
+  "scripts/02_exploratory_analysis",
+  "scripts/03_statistical_models",
+  "scripts/04_figure_generation",
+  "scripts/05_supplementary",
+  "results/figures",
+  "results/tables",
+  "results/supplementary"
 )
 
-# Install and load packages
-for (pkg in required_packages) {
-  if (!require(pkg, character.only = TRUE)) {
-    install.packages(pkg, dependencies = TRUE)
-    library(pkg, character.only = TRUE)
+for (dir in required_dirs) {
+  if (!dir.exists(file.path(project_root, dir))) {
+    dir.create(file.path(project_root, dir), recursive = TRUE)
   }
 }
 
-# Global settings
-set.seed(42)
-theme_set(theme_classic())
+# ==============================================================================
+# PACKAGE MANAGEMENT & LOADING
+# ==============================================================================
+required_packages <- c(
+  # Data manipulation
+  "tidyverse",      # ggplot2, dplyr, tidyr, readr, etc.
+  "data.table",     # Fast data manipulation
+  "janitor",        # Data cleaning
 
-# Color palettes
-hybrid_colors <- c("M.m.domesticus" = "#E31A1C", "Hybrid" = "#1F78B4", "M.m.musculus" = "#33A02C")
-sex_colors <- c("Male" = "#FF7F00", "Female" = "#6A3D9A")
+  # Statistical analysis
+  "broom",          # Tidy statistical output
+  "car",            # ANOVA, regression diagnostics
+  "emmeans",        # Estimated marginal means
+  "multcomp",       # Multiple comparisons
+  "lme4",           # Mixed-effects models
+  "performance",    # Model diagnostics
 
-# Workflow control
-RUN_ANALYSIS <- list(
-  data_preparation = TRUE,
-  exploratory_analysis = TRUE,
-  statistical_models = TRUE,
-  figure_generation = TRUE
+  # Multivariate analysis
+  "FactoMineR",     # PCA analysis
+  "factoextra",     # PCA visualization
+  "corrplot",       # Correlation plots
+  "vegan",          # Ecological statistics
+
+  # Machine Learning (for applying Chapter 1 model)
+  "randomForest",   # Random forest models
+  "caret",          # Model training and validation
+
+  # Visualization
+  "ggplot2",        # Grammar of graphics
+  "ggpubr",         # Publication-ready plots
+  "patchwork",      # Combine plots
+  "RColorBrewer",   # Color palettes
+  "viridis",        # Color scales
+  "scales",         # Scale functions
+  "cowplot",        # Plot arrangements
+  "ggridges",       # Ridge plots
+  "ggbeeswarm",     # Bee swarm plots
+  "ggsignif",       # Significance brackets
+  "ggeffects",      # Effect plots
+
+  # File I/O and utilities
+  "readr",          # Fast file reading
+  "here",           # Path management
+  "stringr",        # String manipulation
+  "forcats",        # Factor manipulation
+
+  # Hybrid analysis framework
+  "parasiteLoad"    # Alice Balard's hybrid analysis framework (NO COMMA!)
 )
 
-cat("Master script loaded successfully!\n")
-cat("Project ready for analysis.\n")
+# Function to install and load packages
+install_and_load <- function(packages) {
+  for (pkg in packages) {
+    if (!require(pkg, character.only = TRUE)) {
+      install.packages(pkg, dependencies = TRUE)
+      library(pkg, character.only = TRUE)
+    }
+  }
+}
+
+# Install and load all required packages
+cat("Loading required packages...\n")
+
+# Special handling for parasiteLoad dependencies
+if (!require("optimx", character.only = TRUE)) {
+  # Install specific version of optimx required for parasiteLoad
+  install.packages("optimx", version = "2021-10.12", dependencies = TRUE)
+  library("optimx", character.only = TRUE)
+}
+
+if (!require("parasiteLoad", character.only = TRUE)) {
+  # Install from Alice Balard's GitHub if not available on CRAN
+  if (!require("devtools", character.only = TRUE)) {
+    install.packages("devtools")
+    library("devtools")
+  }
+  devtools::install_github("alicebalard/parasiteLoad@v2.0", force = TRUE)
+  library("parasiteLoad", character.only = TRUE)
+}
+
+install_and_load(required_packages)
+cat("All packages loaded successfully!\n\n")
+
+# ==============================================================================
+# GLOBAL SETTINGS & PARAMETERS
+# ==============================================================================
+
+# Set global options
+options(
+  stringsAsFactors = FALSE,
+  scipen = 999,  # Avoid scientific notation
+  digits = 4
+)
+
+# Set random seed for reproducibility
+set.seed(42)
+
+# ggplot2 theme settings
+theme_set(theme_classic() +
+            theme(
+              text = element_text(size = 12),
+              axis.title = element_text(size = 14),
+              axis.text = element_text(size = 12),
+              legend.text = element_text(size = 11),
+              legend.title = element_text(size = 12),
+              strip.text = element_text(size = 12)
+            ))
+
+# Color palettes for consistent visualization
+hybrid_colors <- c(
+  "M.m.domesticus" = "#E31A1C",      # Red
+  "Hybrid" = "#1F78B4",              # Blue
+  "M.m.musculus" = "#33A02C"         # Green
+)
+
+sex_colors <- c(
+  "Male" = "#FF7F00",                # Orange
+  "Female" = "#6A3D9A"               # Purple
+)
+
+infection_colors <- c(
+  "Uninfected" = "#999999",          # Gray
+  "E. ferrisi" = "#F781BF",          # Pink
+  "E. falciformis" = "#A65628"       # Brown
+)
+
+# Gene names (19 immune genes from Chapter 1)
+immune_genes <- c(
+  "IFNy", "CXCR3", "IL.6", "IL.13", "IL1RN", "CASP1", "CXCL9", "IDO1",
+  "IRGM1", "MPO", "MUC2", "MUC5AC", "MYD88", "NCR1", "PRF1", "RETNLB",
+  "SOCS1", "TICAM1", "TNF"
+)
+
+# ==============================================================================
+# ANALYSIS PARAMETERS
+# ==============================================================================
+
+# Define analysis parameters
+ANALYSIS_PARAMS <- list(
+  # PCA settings
+  pca_scale = TRUE,
+  pca_center = TRUE,
+  n_components = 5,
+
+  # Statistical significance threshold
+  alpha = 0.05,
+
+  # Multiple testing correction
+  p_adjust_method = "fdr",
+
+  # Sample size thresholds
+  min_group_size = 5,
+
+  # Figure dimensions (inches)
+  fig_width = 8,
+  fig_height = 6,
+  fig_dpi = 300
+)
+
+# ==============================================================================
+# UTILITY FUNCTIONS
+# ==============================================================================
+
+# Load custom functions from Chapter 1
+source(file.path("scripts", "01_data_preparation", "utility_functions.R"))
+
+# Function to print section headers
+print_section <- function(title) {
+  cat("\n", rep("=", 60), "\n")
+  cat(toupper(title), "\n")
+  cat(rep("=", 60), "\n\n")
+}
+
+# Function to save plots with consistent formatting
+save_plot <- function(plot_obj, filename, width = ANALYSIS_PARAMS$fig_width,
+                      height = ANALYSIS_PARAMS$fig_height,
+                      dpi = ANALYSIS_PARAMS$fig_dpi) {
+
+  ggsave(
+    filename = file.path("results", "figures", filename),
+    plot = plot_obj,
+    width = width,
+    height = height,
+    dpi = dpi,
+    bg = "white"
+  )
+
+  cat("Saved plot:", filename, "\n")
+}
+
+# Function to save tables
+save_table <- function(table_obj, filename) {
+  write.csv(
+    table_obj,
+    file = file.path("results", "tables", filename),
+    row.names = FALSE
+  )
+  cat("Saved table:", filename, "\n")
+}
+
+# ==============================================================================
+# DATA LOADING FUNCTIONS
+# ==============================================================================
+
+# Function to load primary dataset
+load_field_data <- function() {
+  cat("Loading field mice dataset...\n")
+
+  field_data <- read_csv(
+    file.path("data", "processed", "field_with_predictions.csv"),
+    show_col_types = FALSE
+  )
+
+  cat("✓ Loaded", nrow(field_data), "wild mice with complete data\n")
+  cat("✓ Variables:", ncol(field_data), "columns\n")
+
+  # Basic data validation
+  if ("predicted_weight_loss" %in% names(field_data)) {
+    cat("✓ Predicted weight loss values present\n")
+  } else {
+    warning("⚠ Predicted weight loss values missing!")
+  }
+
+  return(field_data)
+}
+
+# Function to load Chapter 1 Random Forest model
+load_chapter1_model <- function() {
+  cat("Loading Chapter 1 Random Forest model...\n")
+
+  model_path <- file.path("data", "processed", "chapter1_rf_model.rds")
+
+  if (file.exists(model_path)) {
+    model <- readRDS(model_path)
+    cat("✓ Random Forest model loaded successfully\n")
+    cat("  - Model type:", class(model)[1], "\n")
+    cat("  - Number of trees:", model$ntree, "\n")
+    cat("  - Variables used:", length(model$forest$xlevels), "\n")
+    return(model)
+  } else {
+    warning("⚠ Chapter 1 model not found at:", model_path)
+    return(NULL)
+  }
+}
+
+# ==============================================================================
+# ANALYSIS WORKFLOW CONTROL
+# ==============================================================================
+
+# Control which analyses to run (set to TRUE/FALSE as needed)
+RUN_ANALYSIS <- list(
+  data_loading = TRUE,
+  exploratory_analysis = TRUE,
+  statistical_models = TRUE,
+  figure_generation = TRUE,
+  supplementary_analysis = TRUE
+)
+
+# ==============================================================================
+# MAIN ANALYSIS WORKFLOW
+# ==============================================================================
+
+cat("Starting Hybrid Males Suffer More Analysis Pipeline\n")
+cat("Project Root:", project_root, "\n")
+cat("Timestamp:", Sys.time(), "\n\n")
+
+# 1. DATA LOADING & SETUP
+if (RUN_ANALYSIS$data_loading) {
+  print_section("DATA LOADING & SETUP")
+
+  # Load primary dataset
+  field_mice <- load_field_data()
+
+  # Load Chapter 1 model
+  rf_model <- load_chapter1_model()
+
+  # Basic data summary
+  cat("\nDataset Summary:\n")
+  cat("- Sample size:", nrow(field_mice), "mice\n")
+  cat("- Predicted weight loss range:",
+      round(min(field_mice$predicted_weight_loss, na.rm = TRUE), 2), "to",
+      round(max(field_mice$predicted_weight_loss, na.rm = TRUE), 2), "%\n")
+
+  # Check for key variables
+  key_vars <- c("hybrid_index", "sex", "predicted_weight_loss")
+  missing_vars <- key_vars[!key_vars %in% names(field_mice)]
+  if (length(missing_vars) > 0) {
+    warning("⚠ Missing key variables:", paste(missing_vars, collapse = ", "))
+  } else {
+    cat("✓ All key variables present for hybrid/sex analysis\n")
+  }
+}
+
+# 2. EXPLORATORY ANALYSIS
+if (RUN_ANALYSIS$exploratory_analysis) {
+  print_section("EXPLORATORY ANALYSIS")
+  # Scripts will be created in scripts/02_exploratory_analysis/
+  cat("Ready for exploratory analysis modules\n")
+}
+
+# 3. STATISTICAL MODELS
+if (RUN_ANALYSIS$statistical_models) {
+  print_section("STATISTICAL MODELING")
+  # Scripts will be created in scripts/03_statistical_models/
+  cat("Ready for statistical modeling modules\n")
+}
+
+# 4. FIGURE GENERATION
+if (RUN_ANALYSIS$figure_generation) {
+  print_section("FIGURE GENERATION")
+  # Scripts will be created in scripts/04_figure_generation/
+  cat("Ready for figure generation modules\n")
+}
+
+# 5. SUPPLEMENTARY ANALYSIS
+if (RUN_ANALYSIS$supplementary_analysis) {
+  print_section("SUPPLEMENTARY ANALYSIS")
+  # Scripts will be created in scripts/05_supplementary/
+  cat("Ready for supplementary analysis modules\n")
+}
+
+# ==============================================================================
+# ANALYSIS COMPLETION
+# ==============================================================================
+
+print_section("SETUP COMPLETE")
+cat("Chapter 2 analysis environment initialized successfully!\n")
+cat("Datasets loaded and ready for hybrid/sex analysis.\n\n")
+
+cat("Next steps:\n")
+cat("1. Run exploratory analysis to examine hybrid patterns\n")
+cat("2. Analyze sex-specific differences in infection tolerance\n")
+cat("3. Generate publication figures\n")
+cat("4. Create manuscript tables\n\n")
+
+cat("Key objects in environment:\n")
+cat("- field_mice: Primary dataset (n =", nrow(field_mice), ")\n")
+if (!is.null(rf_model)) {
+  cat("- rf_model: Chapter 1 Random Forest model\n")
+}
+cat("- immune_genes: 19 gene names for analysis\n")
+cat("- Color palettes: hybrid_colors, sex_colors, infection_colors\n\n")
+
+# Save workspace for future reference
+save.image(file.path("results", "chapter2_workspace.RData"))
+cat("Workspace saved to results/chapter2_workspace.RData\n")
+
