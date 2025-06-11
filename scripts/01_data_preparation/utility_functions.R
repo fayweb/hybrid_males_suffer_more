@@ -164,3 +164,87 @@ save_plot_all_formats <- function(plot_object, plot_name, output_dir = "results/
     cat("❌ Error saving", plot_name, ":", e$message, "\n")
   })
 }
+
+save_plot_all_formats_panel <- function(plot_object, plot_name, output_dir = "results/figures",
+                                  width = 7, height = 7, dpi = 300) {
+
+  # Create figure-specific folder
+  plot_folder <- file.path(output_dir, plot_name)
+  dir.create(plot_folder, recursive = TRUE, showWarnings = FALSE)
+
+  # Define base file path (no extension yet)
+  base_path <- file.path(plot_folder, plot_name)
+
+  # Try saving all formats
+  tryCatch({
+    # PDF (vector graphic, ideal for publications)
+    ggsave(filename = paste0(base_path, ".pdf"),
+           plot = plot_object, width = width, height = height, dpi = dpi, units = "in", device = cairo_pdf)
+    cat("✓ Saved", plot_name, "as PDF\n")
+
+    # JPEG (raster graphic, high-res)
+    ggsave(filename = paste0(base_path, ".jpeg"),
+           plot = plot_object, width = width, height = height, dpi = dpi, units = "in")
+    cat("✓ Saved", plot_name, "as JPEG\n")
+
+    cat("✅ All formats saved in folder:", plot_folder, "\n\n")
+
+  }, error = function(e) {
+    cat("❌ Error saving", plot_name, ":", e$message, "\n")
+  })
+}
+
+
+# Function to print section headers
+print_section <- function(title) {
+  cat("\n", rep("=", 60), "\n")
+  cat(toupper(title), "\n")
+  cat(rep("=", 60), "\n\n")
+}
+
+# Function to save plots with consistent formatting
+
+# ==============================================================================
+# DATA LOADING FUNCTIONS
+# ==============================================================================
+
+# Function to load primary dataset
+load_field_data <- function() {
+  cat("Loading field mice dataset...\n")
+
+  field_data <- read_csv(
+    file.path("data", "processed", "field_with_predictions.csv"),
+    show_col_types = FALSE
+  )
+
+  cat("✓ Loaded", nrow(field_data), "wild mice with complete data\n")
+  cat("✓ Variables:", ncol(field_data), "columns\n")
+
+  # Basic data validation
+  if ("predicted_weight_loss" %in% names(field_data)) {
+    cat("✓ Predicted weight loss values present\n")
+  } else {
+    warning("⚠ Predicted weight loss values missing!")
+  }
+
+  return(field_data)
+}
+
+# Function to load Chapter 1 Random Forest model
+load_chapter1_model <- function() {
+  cat("Loading Chapter 1 Random Forest model...\n")
+
+  model_path <- file.path("data", "processed", "chapter1_rf_model.rds")
+
+  if (file.exists(model_path)) {
+    model <- readRDS(model_path)
+    cat("✓ Random Forest model loaded successfully\n")
+    cat("  - Model type:", class(model)[1], "\n")
+    cat("  - Number of trees:", model$ntree, "\n")
+    cat("  - Variables used:", length(model$forest$xlevels), "\n")
+    return(model)
+  } else {
+    warning("⚠ Chapter 1 model not found at:", model_path)
+    return(NULL)
+  }
+}

@@ -96,6 +96,8 @@ required_packages <- c(
   "forcats",
   "ggrepel",
   "ggtext",
+  "gridExtra",
+
 
   # File I/O and utilities
   "readr",          # Fast file reading
@@ -114,6 +116,7 @@ required_packages <- c(
   "viridis",
   "ggmap",
   "rosm"
+
 )
 
 # Function to install and load packages
@@ -247,84 +250,7 @@ ANALYSIS_PARAMS <- list(
 # Load custom functions from Chapter 1
 source(file.path("scripts", "01_data_preparation", "utility_functions.R"))
 
-# Function to print section headers
-print_section <- function(title) {
-  cat("\n", rep("=", 60), "\n")
-  cat(toupper(title), "\n")
-  cat(rep("=", 60), "\n\n")
-}
 
-# Function to save plots with consistent formatting
-save_plot <- function(plot_obj, filename, width = ANALYSIS_PARAMS$fig_width,
-                      height = ANALYSIS_PARAMS$fig_height,
-                      dpi = ANALYSIS_PARAMS$fig_dpi) {
-
-  ggsave(
-    filename = file.path("results", "figures", filename),
-    plot = plot_obj,
-    width = width,
-    height = height,
-    dpi = dpi,
-    bg = "white"
-  )
-
-  cat("Saved plot:", filename, "\n")
-}
-
-# Function to save tables
-save_table <- function(table_obj, filename) {
-  write.csv(
-    table_obj,
-    file = file.path("results", "tables", filename),
-    row.names = FALSE
-  )
-  cat("Saved table:", filename, "\n")
-}
-
-# ==============================================================================
-# DATA LOADING FUNCTIONS
-# ==============================================================================
-
-# Function to load primary dataset
-load_field_data <- function() {
-  cat("Loading field mice dataset...\n")
-
-  field_data <- read_csv(
-    file.path("data", "processed", "field_with_predictions.csv"),
-    show_col_types = FALSE
-  )
-
-  cat("✓ Loaded", nrow(field_data), "wild mice with complete data\n")
-  cat("✓ Variables:", ncol(field_data), "columns\n")
-
-  # Basic data validation
-  if ("predicted_weight_loss" %in% names(field_data)) {
-    cat("✓ Predicted weight loss values present\n")
-  } else {
-    warning("⚠ Predicted weight loss values missing!")
-  }
-
-  return(field_data)
-}
-
-# Function to load Chapter 1 Random Forest model
-load_chapter1_model <- function() {
-  cat("Loading Chapter 1 Random Forest model...\n")
-
-  model_path <- file.path("data", "processed", "chapter1_rf_model.rds")
-
-  if (file.exists(model_path)) {
-    model <- readRDS(model_path)
-    cat("✓ Random Forest model loaded successfully\n")
-    cat("  - Model type:", class(model)[1], "\n")
-    cat("  - Number of trees:", model$ntree, "\n")
-    cat("  - Variables used:", length(model$forest$xlevels), "\n")
-    return(model)
-  } else {
-    warning("⚠ Chapter 1 model not found at:", model_path)
-    return(NULL)
-  }
-}
 
 # ==============================================================================
 # ANALYSIS WORKFLOW CONTROL
@@ -365,7 +291,7 @@ if (RUN_ANALYSIS$data_loading) {
       round(max(field_mice$predicted_weight_loss, na.rm = TRUE), 2), "%\n")
 
   # Check for key variables
-  key_vars <- c("hybrid_index", "sex", "predicted_weight_loss")
+  key_vars <- c("HI", "Sex", "predicted_weight_loss")
   missing_vars <- key_vars[!key_vars %in% names(field_mice)]
   if (length(missing_vars) > 0) {
     warning("⚠ Missing key variables:", paste(missing_vars, collapse = ", "))
@@ -387,26 +313,15 @@ if (RUN_ANALYSIS$exploratory_analysis) {
   cat("✓ Summary tables generated\n\n")
 }
 
-# 3. STATISTICAL MODELS
-if (RUN_ANALYSIS$statistical_models) {
-  print_section("STATISTICAL MODELING")
-  # Scripts will be created in scripts/03_statistical_models/
-  cat("Ready for statistical modeling modules\n")
-}
 
-# 4. FIGURE GENERATION
-if (RUN_ANALYSIS$figure_generation) {
-  print_section("FIGURE GENERATION")
-  # Scripts will be created in scripts/04_figure_generation/
-  cat("Ready for figure generation modules\n")
-}
 
-# 5. SUPPLEMENTARY ANALYSIS
-if (RUN_ANALYSIS$supplementary_analysis) {
-  print_section("SUPPLEMENTARY ANALYSIS")
-  # Scripts will be created in scripts/05_supplementary/
-  cat("Ready for supplementary analysis modules\n")
-}
+# Run distribution analysis
+cat("Running distribution analysis...\n")
+source(file.path("scripts", "02_exploratory_analysis", "02_distribution_analysis.R"))
+cat("✓ Distribution analysis completed\n")
+cat("✓ Supplementary Figure 1 panels created and saved\n\n")
+
+
 
 # ==============================================================================
 # ANALYSIS COMPLETION
