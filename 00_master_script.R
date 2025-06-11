@@ -204,6 +204,7 @@ infection_status_colors <- c(
 
 
 
+
 infection_factors <- c("Uninfected",
                      "E. ferrisi",
                      "E. falciformis")
@@ -314,6 +315,7 @@ if (RUN_ANALYSIS$exploratory_analysis) {
 }
 
 
+# Add this after the exploratory analysis section
 
 # Run distribution analysis
 cat("Running distribution analysis...\n")

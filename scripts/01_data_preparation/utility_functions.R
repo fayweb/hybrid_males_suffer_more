@@ -165,6 +165,64 @@ save_plot_all_formats <- function(plot_object, plot_name, output_dir = "results/
   })
 }
 
+save_plot_all_formats_tight <- function(plot_object, plot_name, output_dir = "results/figures",
+                                  width = 5, height = 5, dpi = 300) {
+
+  # Create figure-specific folder
+  plot_folder <- file.path(output_dir, plot_name)
+  dir.create(plot_folder, recursive = TRUE, showWarnings = FALSE)
+
+  # Define base file path (no extension yet)
+  base_path <- file.path(plot_folder, plot_name)
+
+  # Try saving all formats
+  tryCatch({
+    # PDF (vector graphic, ideal for publications)
+    ggsave(filename = paste0(base_path, ".pdf"),
+           plot = plot_object, width = width, height = height, dpi = dpi, units = "in", device = cairo_pdf)
+    cat("✓ Saved", plot_name, "as PDF\n")
+
+    # JPEG (raster graphic, high-res)
+    ggsave(filename = paste0(base_path, ".jpeg"),
+           plot = plot_object, width = width, height = height, dpi = dpi, units = "in")
+    cat("✓ Saved", plot_name, "as JPEG\n")
+
+    cat("✅ All formats saved in folder:", plot_folder, "\n\n")
+
+  }, error = function(e) {
+    cat("❌ Error saving", plot_name, ":", e$message, "\n")
+  })
+}
+
+save_plot_all_formats_wide <- function(plot_object, plot_name, output_dir = "results/figures",
+                                        width = 11, height = 5, dpi = 300) {
+
+  # Create figure-specific folder
+  plot_folder <- file.path(output_dir, plot_name)
+  dir.create(plot_folder, recursive = TRUE, showWarnings = FALSE)
+
+  # Define base file path (no extension yet)
+  base_path <- file.path(plot_folder, plot_name)
+
+  # Try saving all formats
+  tryCatch({
+    # PDF (vector graphic, ideal for publications)
+    ggsave(filename = paste0(base_path, ".pdf"),
+           plot = plot_object, width = width, height = height, dpi = dpi, units = "in", device = cairo_pdf)
+    cat("✓ Saved", plot_name, "as PDF\n")
+
+    # JPEG (raster graphic, high-res)
+    ggsave(filename = paste0(base_path, ".jpeg"),
+           plot = plot_object, width = width, height = height, dpi = dpi, units = "in")
+    cat("✓ Saved", plot_name, "as JPEG\n")
+
+    cat("✅ All formats saved in folder:", plot_folder, "\n\n")
+
+  }, error = function(e) {
+    cat("❌ Error saving", plot_name, ":", e$message, "\n")
+  })
+}
+
 save_plot_all_formats_panel <- function(plot_object, plot_name, output_dir = "results/figures",
                                   width = 7, height = 7, dpi = 300) {
 
