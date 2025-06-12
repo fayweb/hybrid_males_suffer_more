@@ -455,8 +455,3 @@ write_csv(network_stats,
 write_csv(importance_results,
           file.path("results", "tables", "gene_importance_by_group.csv"))
 
-cat("✓ Results exported to results/tables/\n")
-
-# ==============================================================================
-# SUMMARY
-# ==============================================================================

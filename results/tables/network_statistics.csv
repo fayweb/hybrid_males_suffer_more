@@ -1,6 +1,6 @@
 metric,value
 Network correlation,0.876
-Infected females (n),0
-Infected males (n),0
-Unique modules (female),3
-Unique modules (male),2
+Infected females (n),60
+Infected males (n),73
+Unique modules (F),3
+Unique modules (M),2
