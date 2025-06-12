@@ -33,8 +33,8 @@ p1 <- bananaPlot(mod = complete_model$H3,
   scale_color_manual(values = c("#4daf4a", "#ff7f00"),
                      name = "Sex") +
   theme_bw() +
-  theme(legend.position = c(0.5, 0.05),
-        legend.direction = "horizontal",
+  theme(legend.position = 'none',
+      #  legend.direction = "horizontal",
         axis.title.x = element_blank(),
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank()) +
@@ -69,8 +69,8 @@ p2 <- bananaPlot(mod = constitutive_model$H3,
   scale_color_manual(values = sex_colors,
                      name = "Sex") +
   theme_bw()  +
-  theme(legend.position = c(0.5, 0.05),
-        legend.direction = "horizontal",
+  theme(legend.position = 'none',
+        #  legend.direction = "horizontal",
         axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank()) +
@@ -106,8 +106,8 @@ p2 <- bananaPlot(mod = constitutive_model$H3,
   scale_color_manual(values = sex_colors,
                      name = "Sex") +
   theme_bw()  +
-  theme(legend.position = c(0.5, 0.05),
-        legend.direction = "horizontal",
+  theme(legend.position = 'none',
+        #  legend.direction = "horizontal",
         axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank()) +
@@ -127,45 +127,14 @@ save_plot_all_formats_tight(plot_object = combined_p2, plot_name = "Constitutive
 cat("✓ Constitutive costs plot saved\n")
 
 ########################################################################
-# only infected
 
-# Your exact pattern:
-p5 <- bananaPlot(mod = infected_model$H3,
-                 data = infected_data,
-                 response = "response",
-                 group = "Sex",
-                 cols = c("white", "white")) +
-  scale_fill_manual(values = sex_colors,
-                    name = "Sex") +
-  scale_color_manual(values = sex_colors,
-                     name = "Sex") +
-  theme_bw()  +
-  theme(legend.position = c(0.5, 0.05),
-        legend.direction = "horizontal",
-        axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()) +
-  labs(y = "Predicted weight loss (%)\nImmune signature")
-
-print(p5)
-
-# Use patchwork to combine the plots without any space between them
-combined_p5 <- p5 / HIgradientBar +
-  plot_layout(heights = c(1, 0.1)) # Adjust the relative heights as needed
-
-# Print the combined plot
-print(combined_p5)
-
-save_plot_all_formats_tight(plot_object = combined_p5, plot_name = "Parasite_load_infected")
-
-cat("✓ Constitutive costs plot saved\n")
 # ===========================================================================
 # 3. INFECTION DOMINANCE PLOT - FOLLOWING YOUR EXACT PATTERN
 # ===========================================================================
 # Fix your color definition
 infection_status_colors <- c(
   "Infected" = "#FF7094",      # Pink for infected
-  "Uninfected" = "#A6CEE3"     # Blue for uninfected
+  "Uninfected" = "#00FFFF"     # Blue for uninfected
 )
 cat("Creating infection dominance banana plot...\n")
 p3_simple <- bananaPlot(mod = infection_model$H3,
@@ -183,8 +152,8 @@ p3_simple <- bananaPlot(mod = infection_model$H3,
   ) +
   theme_bw() +
   theme(
-    legend.position = c(0.5, 0.05),
-    legend.direction = "horizontal",
+    legend.position = 'none',
+    #  legend.direction = "horizontal",
     axis.title.x = element_blank(),
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank()

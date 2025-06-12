@@ -150,7 +150,7 @@ create_ferreira_effect_plot <- function(results_list, subtitle = NULL) {
     scale_color_manual(
       values = c(
         "Positive" = "#CD1076",
-        "Negative" = "#00EEEE",
+        "Negative" = "#7FFF00",
         "Not Significant" = "#6C757D"
       ),
       name = "Effect"
