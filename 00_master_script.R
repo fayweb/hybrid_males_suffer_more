@@ -185,8 +185,8 @@ hybrid_colors <- c(
 )
 
 sex_colors <- c(
-  "Female" = "#4daf4a",   # Green
-  "Male"   = "#ff7f00"    # Orange
+  "F" = "#4daf4a",   # Green
+  "M"   = "#ff7f00"    # Orange
 )
 
 
