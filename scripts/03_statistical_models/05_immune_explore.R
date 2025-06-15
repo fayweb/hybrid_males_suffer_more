@@ -256,14 +256,14 @@ plot_coefficients_3 <- ggplot(coef_data_3, aes(x = estimate, y = reorder(term, e
   geom_point(aes(color = significant), size = 3) +
   scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black"),
                      name = "Significant\n(p < 0.05)") +
-  labs(title = "Model Coefficients for Predicted Weight Loss",
+  labs(title = "",
        x = "Coefficient Estimate",
        y = "") +
   theme_minimal()
 
 plot_coefficients_3
 
-save_plot_all_formats(plot_coefficients, "weight_loss_coefficients_HI")
+save_plot_all_formats(plot_coefficients_3, "weight_loss_coefficients_HI")
 
 
 # ==============================================================================
@@ -327,27 +327,51 @@ top_pathway <- pathway_results %>%
 # Build model
 formula_top <- as.formula(paste(top_pathway, "~ Sex * (HI + He) * infection + HI:He"))
 model_top <- lm(formula_top, data = immune_data)
+summary(model_top)
 
 # Predict
 pred_pathway <- ggpredict(model_top, terms = c("HI [all]", "infection", "Sex"))
 
-# Plot
-plot_top_pathway <- ggplot(pred_pathway, aes(x = x, y = predicted, color = group)) +
-  geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group),
-              alpha = 0.2, color = NA) +
-  geom_line(size = 1.2) +
-  facet_wrap(~ facet, nrow = 1) +
-  scale_color_manual(values = c("Uninfected" = "#00FFFF", "Infected" = "#FF7094")) +
-  scale_fill_manual(values = c("Uninfected" = "#00FFFF", "Infected" = "#FF7094")) +
-  labs(title = paste(top_pathway, "Response by HI, Sex, and Infection"),
-       x = "Hybrid Index",
-       y = paste(top_pathway, "Score")) +
-  theme_minimal()
+# 1. Define your hybrid gradient bar as a function per facet
+make_HI_gradient_bar <- function(label) {
+  ggplot(data.frame(hi = seq(0, 1, 0.001)), aes(x = hi, y = 1, fill = hi)) +
+    geom_tile() +
+    scale_x_continuous(breaks = seq(0, 1, 0.25),
+                       labels = c("0", "0.25", "0.5", "0.75", "1")) +
+    scale_fill_gradient(low = "blue", high = "red") +
+    theme_void() +
+    theme(
+      legend.position = "none",
+      axis.text.x = element_text(color = "black", size = 10),
+      axis.title.x = element_blank(),
+      plot.margin = unit(c(0, 0, 0, 0), "cm")
+    ) +
+    labs(title = label)
+}
 
-plot_top_pathway
+# 2. Create both gradients manually for "F" and "M"
+HIbar_F <- make_HI_gradient_bar("F")
+HIbar_M <- make_HI_gradient_bar("M")
 
-# Save
-save_plot_all_formats(plot_top_pathway, paste0("pathway_", top_pathway))
+# 3. Patchwork layout: one plot row per panel, and one for each bar
+# First, regenerate your plot without a shared x-axis title
+main_plot <- plot_top_pathway +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    plot.margin = unit(c(0.5, 0.5, 0, 0.5), "cm")
+  )
+
+# 4. Assemble all with patchwork
+combined_plot <- main_plot /
+  (HIbar_F | HIbar_M) +
+  plot_layout(heights = c(1, 0.1))
+
+# 5. Print and save
+print(combined_plot)
+
+save_plot_all_formats(combined_plot, paste0("pathway_", top_pathway, "_facet_gradient"))
 # ==============================================================================
 # 6. PERMANOVA WITH INFECTION STATUS
 # ==============================================================================
@@ -381,11 +405,7 @@ permanova_simple <- adonis2(
 cat("\nSimplified PERMANOVA:\n")
 print(permanova_simple)
 
-pca <- prcomp(immune_matrix, scale. = TRUE)
-plot_df <- data.frame(pca$x[, 1:2], infection = immune_data$infection, Sex = immune_data$Sex)
-ggplot(plot_df, aes(PC1, PC2, color = infection, shape = Sex)) +
-  geom_point(alpha = 0.6) +
-  theme_minimal()
+
 
 
 # ==============================================================================
@@ -441,6 +461,8 @@ coherence_model <- lm(coherence ~ poly(mean_HI, 2), data = coherence_data)
 summary(coherence_model)
 
 save_plot_all_formats(plot_coherence, "network_coherence_by_infection")
+
+
 
 # ==============================================================================
 # 8. UMAP
@@ -522,6 +544,58 @@ print(summary(disp_model))
 # D. MANOVA for trajectory differences
 cat("\nD. MANOVA for UMAP trajectories...\n")
 
+# Create dispersion plot showing HI × infection interaction
+# This is highly significant (p = 0.00169)
+
+# Prepare prediction data for dispersion model
+pred_dispersion <- ggpredict(disp_model, terms = c("HI [all]", "infection", "Sex"))
+
+# Create the dispersion plot
+plot_dispersion <- ggplot(pred_dispersion, aes(x = x, y = predicted, color = group)) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group),
+              alpha = 0.2, color = NA) +
+  geom_line(size = 1.2) +
+  facet_wrap(~ facet, nrow = 1) +
+  scale_color_manual(values = c("Uninfected" = "#00FFFF", "Infected" = "#FF7094"),
+                     name = "Infection Status") +
+  scale_fill_manual(values = c("Uninfected" = "#00FFFF", "Infected" = "#FF7094"),
+                    name = "Infection Status") +
+  labs(title = "d) Immune Dispersion Shows HI × Infection Effect",
+       subtitle = "HI × infection: p = 0.00169**",
+       x = "Hybrid Index",
+       y = "Distance to Centroid\n(Immune Dysregulation)") +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 12),
+    plot.subtitle = element_text(face = "italic", color = "darkred"),
+    strip.text = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+
+  plot_dispersion
+# Save the plot
+save_plot_all_formats(plot_dispersion, "immune_dispersion_HI_infection")
+
+# Alternative: Show actual data points with model predictions
+plot_dispersion_points <- ggplot(immune_data, aes(x = HI, y = dist_to_centroid)) +
+  geom_point(aes(color = infection, shape = Sex), alpha = 0.6, size = 2) +
+  geom_smooth(aes(color = infection), method = "lm", formula = y ~ poly(x, 2),
+              se = TRUE, size = 1.2) +
+  scale_color_manual(values = c("Uninfected" = "#00FFFF", "Infected" = "#FF7094"),
+                     name = "Infection Status") +
+  scale_shape_manual(values = c("F" = 16, "M" = 17), name = "Sex") +
+  labs(title = "d) Immune Dispersion Shows HI × Infection Effect",
+       subtitle = "HI × infection: p = 0.00169**",
+       x = "Hybrid Index",
+       y = "Distance to Centroid\n(Immune Dysregulation)") +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 12),
+    plot.subtitle = element_text(face = "italic", color = "darkred")
+  )
+
+print(plot_dispersion_points)
+
 manova_result <- manova(cbind(UMAP1, UMAP2) ~ Sex * HI * He * infection,
                         data = immune_data)
 cat("MANOVA Results:\n")
@@ -530,6 +604,12 @@ print(summary(manova_result, test = "Pillai"))
 ##################
 cat("\n\nENHANCED UMAP ANALYSIS: HYBRID TRAJECTORIES\n")
 cat("============================================\n")
+
+# Define correct sex colors
+sex_colors <- c(
+  "F" = "#4daf4a",   # Green
+  "M" = "#ff7f00"    # Orange
+)
 
 # 1. Create trajectory data for UMAP space
 trajectory_data <- immune_data %>%
@@ -605,7 +685,6 @@ for(s in c("F", "M")) {
       arrange(mean_HI)
 
     if(nrow(traj_subset) > 1) {
-      # Add arrow from second-to-last to last point
       n_points <- nrow(traj_subset)
       plot_umap_trajectories <- plot_umap_trajectories +
         annotate("segment",
@@ -614,44 +693,91 @@ for(s in c("F", "M")) {
                  xend = traj_subset$mean_UMAP1[n_points],
                  yend = traj_subset$mean_UMAP2[n_points],
                  arrow = arrow(length = unit(0.3, "cm"), type = "closed"),
-                 color = ifelse(s == "F", "#E69F00", "#56B4E9"),
+                 color = sex_colors[[s]],  # <- updated here
                  size = 1.5, alpha = 0.8)
     }
   }
 }
 
 print(plot_umap_trajectories)
-save_plot_all_formats_wide(plot_umap_trajectories, "UMAP_hybrid_trajectories")
+save_plot_all_formats_panel(plot_umap_trajectories, "UMAP_hybrid_trajectories")
 
-# 3. UMAP colored by weight loss with trajectory overlay
+# Create a color lookup table
+sex_color_map <- c("F" = sex_colors[["F"]], "M" = sex_colors[["M"]])
+
+# Add a column for path color to trajectory_data
+trajectory_data <- trajectory_data %>%
+  mutate(sex_color = sex_color_map[Sex])
+
+# Plot
 plot_umap_weight_trajectory <- ggplot() +
-  # Points colored by weight loss
+  # Points colored by predicted weight loss (continuous)
   geom_point(data = immune_data,
              aes(x = UMAP1, y = UMAP2, color = predicted_weight_loss),
              size = 2, alpha = 0.6) +
-  # Trajectory overlay
+  scale_color_viridis_c(name = "Predicted\nWeight Loss (%)", option = "plasma") +
+
+  # Trajectory overlay with color applied manually (not via aes)
   geom_path(data = trajectory_data,
             aes(x = mean_UMAP1, y = mean_UMAP2,
-                group = interaction(Sex, infection),
-                linetype = Sex),
-            size = 1.2, color = "black", alpha = 0.8) +
+                group = interaction(Sex, infection)),
+            size = 1.2, alpha = 0.9,
+            color = NA) +
+  geom_path(data = trajectory_data,
+            aes(x = mean_UMAP1, y = mean_UMAP2,
+                group = interaction(Sex, infection)),
+            size = 1.2, alpha = 0.9,
+            color = trajectory_data$sex_color,
+            inherit.aes = FALSE) +
+
   facet_wrap(~ infection) +
-  scale_color_viridis_c(name = "Predicted\nWeight Loss (%)",
-                        option = "plasma") +
-  scale_linetype_manual(values = c("F" = "solid", "M" = "dashed")) +
   labs(title = "Weight Loss Landscape in Immune Space",
-       subtitle = "Black lines show sex-specific trajectories along hybrid gradient",
+       subtitle = "Points: predicted weight loss; Lines: sex-specific hybrid trajectories",
        x = "UMAP Dimension 1",
        y = "UMAP Dimension 2") +
   theme_minimal() +
   theme(panel.border = element_rect(fill = NA, color = "black"))
 
 print(plot_umap_weight_trajectory)
-save_plot_all_formats(plot_umap_weight_trajectory, "UMAP_weight_loss_trajectories")
 
-# 4. Statistical test of trajectory differences
-cat("\nTesting trajectory differences between sexes:\n")
+save_plot_all_formats(plot_umap_weight_trajectory, "UMAP_weight_loss_trajectories")
 cat("=============================================\n")
+
+# Best UMAP visualization for Sex × HI × He interaction
+plot_umap_trajectories <- ggplot() +
+  # Individual points in background
+  geom_point(data = immune_data,
+             aes(x = UMAP1, y = UMAP2, color = HI),
+             alpha = 0.3, size = 2) +
+  # Trajectory lines for each sex
+  geom_path(data = trajectory_data,
+            aes(x = mean_UMAP1, y = mean_UMAP2, group = Sex),
+            size = 2, alpha = 0.8) +
+  # Trajectory points
+  geom_point(data = trajectory_data,
+             aes(x = mean_UMAP1, y = mean_UMAP2, fill = mean_HI, shape = Sex),
+             size = 5, color = "black", stroke = 1) +
+  scale_color_gradient2(low = "blue", mid = "purple", high = "red",
+                        midpoint = 0.5, name = "Hybrid Index") +
+  scale_fill_gradient2(low = "blue", mid = "purple", high = "red",
+                       midpoint = 0.5, guide = "none") +
+  scale_shape_manual(values = c("F" = 21, "M" = 24), name = "Sex") +
+  facet_wrap(~ infection, nrow = 1) +  # Shows infected vs uninfected
+  labs(
+    title = "c) Sex-Specific Immune Trajectories",
+    subtitle = "Sex × HI × He interaction: p = 0.020*",
+    x = "UMAP Dimension 1",
+    y = "UMAP Dimension 2"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 12),
+    plot.subtitle = element_text(face = "italic", color = "darkred"),
+    panel.border = element_rect(fill = NA, color = "black"),
+    panel.grid = element_blank()
+  )
+
+plot_umap_trajectories
 
 # Calculate trajectory length for each sex/infection combination
 trajectory_lengths <- trajectory_data %>%
@@ -712,8 +838,8 @@ plot_divergence <- ggplot(divergence_data,
                           aes(x = HI_bin, y = divergence,
                               fill = infection, group = infection)) +
   geom_col(position = "dodge", alpha = 0.8) +
-  scale_fill_manual(values = c("Uninfected" = "#4daf4a",
-                               "Infected" = "#ff7f00")) +
+  scale_fill_manual(values = c("Uninfected" = "#00FFFF",
+                               "Infected" = "#FF7094")) +
   labs(title = "Sex Divergence in Immune Space Along Hybrid Gradient",
        x = "Hybrid Index Bin",
        y = "Distance Between Male and Female Trajectories") +

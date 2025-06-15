@@ -1,2547 +1,1027 @@
-05_immune_landscapes.R
-
-
-> source("~/GitHub/hybrid_males_suffer_more/scripts/03_statistical_models/05_immune_landscape.R", echo = TRUE)
+source("~/GitHub/hybrid_males_suffer_more/scripts/03_statistical_models/05_immune_explore.R", echo = TRUE)
 
 > # ==============================================================================
-> # COMPLETE IMMUNE LANDSCAPE ANALYSIS: Sex-Specific Trajectories i .... [TRUNCATED] 
+> # IMMUNE ANALYSIS WITH HYBRID INDEX × HETEROZYGOSITY INTERACTIONS .... [TRUNCATED] 
 
+> cat("\n=== IMMUNE ANALYSIS: HI × He INTERACTIONS WITH INFECTION ===\n")
 
-> print_section("COMPREHENSIVE IMMUNE LANDSCAPE ANALYSIS")
+=== IMMUNE ANALYSIS: HI × He INTERACTIONS WITH INFECTION ===
 
- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-COMPREHENSIVE IMMUNE LANDSCAPE ANALYSIS 
-= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-
-
-> cat("Revealing sex-specific immune mechanisms in hybrid breakdown\n\n")
-Revealing sex-specific immune mechanisms in hybrid breakdown
+> cat("Complete dataset approach for maximum statistical power\n\n")
+Complete dataset approach for maximum statistical power
 
 
 > # ==============================================================================
-> # 1. DATA PREPARATION AND VALIDATION
-> # ======================== .... [TRUNCATED] 
-1. PREPARING IMMUNE GENE DATA
+> # 1. DATA PREPARATION
+> # ======================================= .... [TRUNCATED] 
+1. PREPARING COMPLETE DATASET
 
-> cat("==============================\n")
-==============================
+> cat("=============================\n")
+=============================
 
-> # Extract immune gene expression data with comprehensive filtering
+> # Filter to available genes
+> available_genes <- immune_genes[immune_genes %in% names(field_mice)]
+
+> cat("Available immune genes:", length(available_genes), "\n")
+Available immune genes: 19 
+
+> # Create complete dataset with all interactions
 > immune_data <- field_mice %>%
-+   dplyr::select(Mouse_ID, HI, Sex, infection_st .... [TRUNCATED] 
++   dplyr::select(Mouse_ID, HI, Sex, infection_status, predicted_wei .... [TRUNCATED] 
 
-> cat("? Immune data extracted: n =", nrow(immune_data), "mice\n")
-? Immune data extracted: n = 304 mice
+> # Handle missing values in immune genes
+> immune_data <- immune_data %>%
++   group_by(Sex, infection) %>%
++   mutate(across(all_of(available_genes), .... [TRUNCATED] 
 
-> cat("? Immune genes included:", length(immune_genes), "\n")
-? Immune genes included: 19 
+> cat("? Total mice:", nrow(immune_data), "\n")
+? Total mice: 304 
 
-> cat("? Sample breakdown:\n")
-? Sample breakdown:
+> cat("? By infection status:\n")
+? By infection status:
 
-> print(table(immune_data$Sex, immune_data$infection_status))
-   
-    Uninfected Infected
-  F         91       60
-  M         80       73
+> print(table(immune_data$infection, immune_data$Sex))
+            
+              F  M
+  Uninfected 91 80
+  Infected   60 73
 
-> # Handle missing values systematically
-> missing_summary <- immune_data %>%
-+   dplyr::select(all_of(immune_genes)) %>%
-+   summarise_all(~sum(is.na .... [TRUNCATED] 
+> cat("\n")
 
-> if(nrow(missing_summary) > 0) {
-+   cat("? Missing values detected in", nrow(missing_summary), "genes\n")
-+   # Impute using median by group (Sex ×  .... [TRUNCATED] 
-? No missing values detected
 
 > # ==============================================================================
-> # 2. CREATE BIOLOGICALLY MEANINGFUL PATHWAY SCORES
-> # ========== .... [TRUNCATED] 
-
+> # 2. CREATE BIOLOGICAL PATHWAY SCORES
+> # ======================= .... [TRUNCATED] 
 2. CREATING IMMUNE PATHWAY SCORES
 
 > cat("=================================\n")
 =================================
 
-> # Define pathways based on known biology
-> immune_pathways <- immune_data %>%
-+   mutate(
-+     # Th1 response (anti-intracellular pathogens)
-+      .... [TRUNCATED] 
-
-> pathway_names <- c("Th1_response", "Th2_mucus", "Inflammation",
-+                    "Regulation", "Cytotoxicity", "Innate_immunity", "Th1_Th2_balan ..." ... [TRUNCATED] 
-
-> cat("? Created", length(pathway_names), "biologically meaningful pathway scores\n")
-? Created 7 biologically meaningful pathway scores
-
-> # ==============================================================================
-> # 3. TEST SEX × HYBRID INDEX INTERACTIONS FOR EACH PATHWAY
-> # == .... [TRUNCATED] 
-
-3. TESTING SEX × HI INTERACTIONS ON IMMUNE PATHWAYS
-
-> cat("===================================================\n")
-===================================================
-
-> # Focus on infected mice (where effects manifest)
-> infected_pathways <- immune_pathways %>%
-+   filter(infection_status == "Infected")
-
-> # Test both linear and non-linear interactions
-> pathway_interaction_results <- map_df(pathway_names, function(pathway) {
+> # Calculate pathway scores using complete dataset
+> calculate_pathways <- function(data, genes) {
++   pathways <- list()
 + 
-+   # Full model with l .... [TRUNCATED] 
++   # Th1 response (anti .... [TRUNCATED] 
 
-> # Adjust for multiple testing
-> pathway_interaction_results <- pathway_interaction_results %>%
-+   mutate(
-+     Linear_padj = p.adjust(Linear_inter .... [TRUNCATED] 
+> # Add pathway scores to dataset
+> pathway_scores <- calculate_pathways(immune_data, available_genes)
 
-> cat("\nPathway-level Sex × HI interaction results:\n")
-
-Pathway-level Sex × HI interaction results:
-
-> print(pathway_interaction_results)
-          Pathway Linear_interaction_p Nonlinear_interaction_p Linear_coef Nonlinear_coef Overall_interaction_p Significant Linear_padj Nonlinear_padj Overall_padj
-1    Th1_response               0.5931                 0.24581      0.8592         4.6190               0.39874       FALSE      0.7955         0.8603       0.9176
-2       Th2_mucus               0.1253                 0.55055      2.6785        -2.5667               0.28530       FALSE      0.6509         0.8653       0.9176
-3    Inflammation               0.6818                 0.79193      0.6830         1.0854               0.87227       FALSE      0.7955         0.8653       0.9176
-4      Regulation               0.3518                 0.86528      1.5318        -0.6883               0.64655       FALSE      0.6509         0.8653       0.9176
-5    Cytotoxicity               0.3720                 0.79834     -1.1911         0.8408               0.66423       FALSE      0.6509         0.8653       0.9176
-6 Innate_immunity               0.8896                 0.68523      0.2331        -1.6816               0.91758       FALSE      0.8896         0.8653       0.9176
-7 Th1_Th2_balance               0.2020                 0.04237     -1.8193         7.1857               0.07721       FALSE      0.6509         0.2966       0.5405
-
-> # ==============================================================================
-> # 4. APPLY parasiteLoad FRAMEWORK TO KEY PATHWAYS
-> # =========== .... [TRUNCATED] 
-
-4. APPLYING parasiteLoad TO IMMUNE PATHWAYS
-
-> cat("============================================\n")
-============================================
-
-> # Test the most promising pathways with parasiteLoad
-> key_pathways <- pathway_interaction_results %>%
-+   filter(Significant) %>%
-+   pull(Pathway)
-
-> parasiteLoad_pathway_results <- list()
-
-> if(length(key_pathways) > 0) {
-+   parasiteLoad_pathway_results <- map(key_pathways, function(pathway) {
-+     cat("Running parasiteLoad on", pathwa .... [TRUNCATED] 
-
-> # ==============================================================================
-> # 5. IMMUNE STATE SPACE TRAJECTORIES (PCA AND UMAP)
-> # ========= .... [TRUNCATED] 
-
-5. CALCULATING IMMUNE STATE SPACE TRAJECTORIES
-
-> cat("==============================================\n")
-==============================================
-
-> # A. PCA for interpretable dimensions
-> cat("A. Running PCA for interpretable components...\n")
-A. Running PCA for interpretable components...
-
-> pca_result <- prcomp(immune_data[, immune_genes], scale. = TRUE)
-
-> # Add PC scores to data
-> immune_data$PC1 <- pca_result$x[,1]
-
-> immune_data$PC2 <- pca_result$x[,2]
-
-> immune_data$PC3 <- pca_result$x[,3]
-
-> # Calculate variance explained
-> var_explained <- summary(pca_result)$importance[2,1:3] * 100
-
-> cat("? PCA completed\n")
-? PCA completed
-
-> cat("  PC1 explains:", round(var_explained[1], 1), "% of variance\n")
-  PC1 explains: 43.8 % of variance
-
-> cat("  PC2 explains:", round(var_explained[2], 1), "% of variance\n")
-  PC2 explains: 11 % of variance
-
-> cat("  PC3 explains:", round(var_explained[3], 1), "% of variance\n")
-  PC3 explains: 9.7 % of variance
-
-> # ==============================================================================
-> # ENHANCED PCA VISUALIZATION
-> # ================================ .... [TRUNCATED] 
-
-ENHANCED PCA AND GENE-LEVEL ANALYSIS
-
-> cat("=====================================\n")
-=====================================
-
-> # Create a simpler PCA biplot without conflicting color scales
-> pca_biplot <- fviz_pca_biplot(pca_result,
-+                               repel = T .... [TRUNCATED] 
-
-> print(pca_biplot)
-
-> # Alternative: Create manual biplot for better control
-> loadings_data <- as.data.frame(pca_result$rotation[,1:2])
-
-> loadings_data$gene <- rownames(loadings_data)
-
-> scaling_factor <- 4
-
-> loadings_data$PC1_scaled <- loadings_data$PC1 * scaling_factor
-
-> loadings_data$PC2_scaled <- loadings_data$PC2 * scaling_factor
-
-> manual_biplot <- ggplot() +
-+   geom_point(data = immune_data,
-+              aes(x = PC1, y = PC2, color = interaction(Sex, infection_status)),
-+   .... [TRUNCATED] 
-
-> print(manual_biplot)
-
-> save_plot_all_formats(manual_biplot, "PCA_biplot_manual")
-? Saved PCA_biplot_manual as PDF
-? Saved PCA_biplot_manual as JPEG
-? All formats saved in folder: results/figures/PCA_biplot_manual 
-
-
-> # 2. Sex-specific PCA plots for infected mice
-> infected_pca_data <- immune_data %>%
-+   filter(infection_status == "Infected")
-
-> # Now create the sex comparison plot
-> pca_sex_comparison <- ggplot(infected_pca_data, aes(x = PC1, y = PC2)) +
-+   geom_point(aes(fill = HI, shape  .... [TRUNCATED] 
-
-> print(pca_sex_comparison)
-
-> save_plot_all_formats(pca_sex_comparison, "PCA_sex_comparison_infected")
-? Saved PCA_sex_comparison_infected as PDF
-? Saved PCA_sex_comparison_infected as JPEG
-? All formats saved in folder: results/figures/PCA_sex_comparison_infected 
-
-
-> # PC1 trajectory plot
-> pc1_trajectory <- ggplot(infected_pca_data, aes(x = HI, y = PC1, color = Sex)) +
-+   geom_point(alpha = 0.6) +
-+   geom_smoo .... [TRUNCATED] 
-
-> print(pc1_trajectory)
-
-> save_plot_all_formats(pc1_trajectory, "PC1_trajectory_by_sex")
-? Saved PC1_trajectory_by_sex as PDF
-? Saved PC1_trajectory_by_sex as JPEG
-? All formats saved in folder: results/figures/PC1_trajectory_by_sex 
-
-
-> # B. UMAP for visualization
-> cat("\nB. Running UMAP for visualization...\n")
-
-B. Running UMAP for visualization...
-
-> # Load required packages for UMAP
-> if (!require("umap", character.only = TRUE)) {
-+   install.packages("umap")
-+   library(umap)
+> for (pathway in names(pathway_scores)) {
++   immune_data[[pathway]] <- pathway_scores[[pathway]]
 + }
-Loading required package: umap
-> # Prepare matrix for UMAP
-> immune_matrix <- immune_data %>%
-+   dplyr::select(all_of(immune_genes)) %>%
-+   as.matrix()
 
-> # Configure and run UMAP with optimized parameters
-> set.seed(42)  # For reproducibility
+> pathway_names <- names(pathway_scores)
 
-> umap_config <- umap.defaults
+> cat("? Created", length(pathway_names), "pathway scores\n\n")
+? Created 7 pathway scores
 
-> umap_config$n_neighbors <- 15
 
-> umap_config$min_dist <- 0.1
+> # ==============================================================================
+> # 3. TEST MULTIPLE MODEL STRUCTURES FOR PREDICTED WEIGHT LOSS
+> # .... [TRUNCATED] 
+3. TESTING MODEL STRUCTURES FOR PREDICTED WEIGHT LOSS
 
-> umap_config$metric <- "euclidean"
+> cat("====================================================\n")
+====================================================
 
-> umap_config$n_epochs <- 500
+> # Model 1: Simple HI × He
+> model1 <- lm(predicted_weight_loss ~ HI * He, data = immune_data)
 
-> umap_result <- umap(immune_matrix, config = umap_config)
+> summary(model1)
 
-> # Add UMAP coordinates to data
-> immune_data$UMAP1 <- umap_result$layout[,1]
+Call:
+lm(formula = predicted_weight_loss ~ HI * He, data = immune_data)
 
-> immune_data$UMAP2 <- umap_result$layout[,2]
+Residuals:
+   Min     1Q Median     3Q    Max 
+-6.495 -1.861 -0.331  1.740  8.777 
 
-> cat("? UMAP completed successfully\n")
-? UMAP completed successfully
-
-> # Test Sex × HI and Sex × He interactions on major PCs and UMAP
-> dimension_interactions <- map_df(c("PC1", "PC2", "PC3", "UMAP1", "UMAP2"), functio .... [TRUNCATED] 
-
-> cat("\nDimension reduction Sex × HI/He interactions:\n")
-
-Dimension reduction Sex × HI/He interactions:
-
-> print(dimension_interactions)
-  Dimension Linear_interaction Nonlinear_interaction
-1       PC1             0.4671                0.9730
-2       PC2             0.9363                0.4276
-3       PC3             0.3930                0.5154
-4     UMAP1             0.5816                0.8854
-5     UMAP2             0.2887                0.8475
-
-> # C. Sex-specific trajectories along hybrid gradient (UMAP space)
-> cat("\nC. Calculating sex-specific trajectories in immune space...\n")
-
-C. Calculating sex-specific trajectories in immune space...
-
-> trajectory_data <- immune_data %>%
-+   filter(infection_status == "Infected") %>%
-+   mutate(hi_bin = cut(HI, breaks = seq(0, 1, by = 0.2), include. .... [TRUNCATED] 
-
-> # Test if trajectories differ between sexes using MANOVA
-> trajectory_test <- immune_data %>%
-+   filter(infection_status == "Infected")
-
-> # Include He in the MANOVA model
-> manova_model <- manova(cbind(UMAP1, UMAP2) ~ Sex * HI + Sex * He, data = trajectory_test)
-
-> manova_summary <- summary(manova_model, test = "Pillai")
-
-> cat("MANOVA results for Sex × HI/He interaction on immune space:\n")
-MANOVA results for Sex × HI/He interaction on immune space:
-
-> print(manova_summary)
-           Df Pillai approx F num Df den Df Pr(>F)  
-Sex         1 0.0066     0.42      2    126  0.661  
-HI          1 0.0511     3.39      2    126  0.037 *
-He          1 0.0079     0.50      2    126  0.609  
-Sex:HI      1 0.0086     0.55      2    126  0.579  
-Sex:He      1 0.0011     0.07      2    126  0.930  
-Residuals 127                                       
+Coefficients:
+            Estimate Std. Error t value            Pr(>|t|)    
+(Intercept)    9.570      0.411   23.27 <0.0000000000000002 ***
+HI            -0.154      0.666   -0.23                0.82    
+He            -0.392      2.035   -0.19                0.85    
+HI:He          4.015      3.436    1.17                0.24    
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-> # ==============================================================================
-> # 6. NETWORK COHERENCE ANALYSIS
-> # ============================= .... [TRUNCATED] 
+Residual standard error: 2.47 on 300 degrees of freedom
+Multiple R-squared:  0.0191,	Adjusted R-squared:  0.00927 
+F-statistic: 1.94 on 3 and 300 DF,  p-value: 0.122
 
-6. CALCULATING SEX-SPECIFIC NETWORK COHERENCE
 
-> cat("=============================================\n")
-=============================================
+> # Model 2: Main effects only
+> model2 <- lm(predicted_weight_loss ~ Sex + HI + He + infection, data = immune_data)
 
-> # Calculate network coherence along HI gradient
-> coherence_analysis <- infected_pathways %>%
-+   mutate(HI_bin = cut(HI, breaks = seq(0, 1, by = 0. .... [TRUNCATED] 
-
-> # Model coherence as function of HI and He
-> coherence_model <- lm(coherence ~ Sex * poly(mean_HI, 2) + Sex * mean_He,
-+                       data  .... [TRUNCATED] 
-
-> cat("Network coherence model summary:\n")
-Network coherence model summary:
-
-> print(summary(coherence_model))
+> summary(model2)
 
 Call:
-lm(formula = coherence ~ Sex * poly(mean_HI, 2) + Sex * mean_He, 
-    data = coherence_analysis)
+lm(formula = predicted_weight_loss ~ Sex + HI + He + infection, 
+    data = immune_data)
 
 Residuals:
-                    1                     2                     3                     4                     5                     6                     7                     8 
- 0.000000000000000191 -0.000000000000014047  0.000000000000021367 -0.000000000000007527  0.011359354014527525 -0.115698010234333779  0.130682474671015986 -0.042228108186968767 
-                    9                    10 
--0.035610234362795208  0.051494524098554255 
+   Min     1Q Median     3Q    Max 
+-6.224 -1.790 -0.292  1.667  8.972 
 
 Coefficients:
-                       Estimate Std. Error t value Pr(>|t|)
-(Intercept)              -104.8      100.1   -1.05     0.40
-SexM                       87.4      102.3    0.85     0.48
-poly(mean_HI, 2)1         -24.0       22.8   -1.06     0.40
-poly(mean_HI, 2)2         178.3      169.4    1.05     0.40
-mean_He                   491.1      467.0    1.05     0.40
-SexM:poly(mean_HI, 2)1     19.6       23.3    0.84     0.49
-SexM:poly(mean_HI, 2)2   -148.1      173.2   -0.86     0.48
-SexM:mean_He             -407.7      477.4   -0.85     0.48
+                  Estimate Std. Error t value            Pr(>|t|)    
+(Intercept)         9.0534     0.3717   24.35 <0.0000000000000002 ***
+SexM               -0.0901     0.2784   -0.32                0.75    
+HI                  0.1854     0.4063    0.46                0.65    
+He                  1.5562     1.0144    1.53                0.13    
+infectionInfected   1.1247     0.2852    3.94              0.0001 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-Residual standard error: 0.135 on 2 degrees of freedom
-Multiple R-squared:  0.712,	Adjusted R-squared:  -0.297 
-F-statistic: 0.706 on 7 and 2 DF,  p-value: 0.696
+Residual standard error: 2.42 on 299 degrees of freedom
+Multiple R-squared:  0.0633,	Adjusted R-squared:  0.0508 
+F-statistic: 5.05 on 4 and 299 DF,  p-value: 0.000591
 
 
-> # Create coherence visualization
-> coherence_plot <- ggplot(coherence_analysis, aes(x = mean_HI, y = coherence, color = Sex)) +
-+   geom_point(size  .... [TRUNCATED] 
+> # Model 3: Two-way interactions
+> model3 <- lm(predicted_weight_loss ~ Sex * HI + Sex * He + HI * He +
++                Sex * infection + HI * infec .... [TRUNCATED] 
 
-> print(coherence_plot)
+> summary(model3)
 
-> save_plot_all_formats(coherence_plot, "Network_coherence_breakdown")
-? Saved Network_coherence_breakdown as PDF
-? Saved Network_coherence_breakdown as JPEG
-? All formats saved in folder: results/figures/Network_coherence_breakdown 
+Call:
+lm(formula = predicted_weight_loss ~ Sex * HI + Sex * He + HI * 
+    He + Sex * infection + HI * infection + He * infection, data = immune_data)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-6.324 -1.843 -0.054  1.566  9.557 
+
+Coefficients:
+                       Estimate Std. Error t value            Pr(>|t|)    
+(Intercept)               9.316      0.514   18.14 <0.0000000000000002 ***
+SexM                     -1.308      0.736   -1.78              0.0765 .  
+HI                       -0.670      0.828   -0.81              0.4191    
+He                        1.286      2.379    0.54              0.5893    
+infectionInfected         2.320      0.795    2.92              0.0038 ** 
+SexM:HI                   2.144      0.833    2.57              0.0105 *  
+SexM:He                   0.547      2.076    0.26              0.7925    
+HI:He                     1.692      3.508    0.48              0.6300    
+SexM:infectionInfected   -0.369      0.571   -0.65              0.5187    
+HI:infectionInfected     -1.299      0.841   -1.55              0.1234    
+He:infectionInfected     -0.908      2.095   -0.43              0.6652    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 2.4 on 293 degrees of freedom
+Multiple R-squared:  0.0927,	Adjusted R-squared:  0.0617 
+F-statistic: 2.99 on 10 and 293 DF,  p-value: 0.00131
+
+
+> # Model 4: Three-way interactions (full model)
+> model4 <- lm(predicted_weight_loss ~ Sex * HI * He * infection, data = immune_data)
+
+> summary(model4)
+
+Call:
+lm(formula = predicted_weight_loss ~ Sex * HI * He * infection, 
+    data = immune_data)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-6.206 -1.690 -0.162  1.576  9.237 
+
+Coefficients:
+                             Estimate Std. Error t value            Pr(>|t|)    
+(Intercept)                     9.154      0.575   15.93 <0.0000000000000002 ***
+SexM                           -1.688      1.106   -1.53               0.128    
+HI                              0.352      1.140    0.31               0.758    
+He                              2.262      3.398    0.67               0.506    
+infectionInfected               2.417      1.125    2.15               0.032 *  
+SexM:HI                         1.699      1.724    0.99               0.325    
+SexM:He                         3.175      5.327    0.60               0.552    
+HI:He                          -2.521      6.017   -0.42               0.675    
+SexM:infectionInfected          1.026      1.770    0.58               0.563    
+HI:infectionInfected           -2.649      2.007   -1.32               0.188    
+He:infectionInfected            0.952      6.451    0.15               0.883    
+SexM:HI:He                     -0.866      8.845   -0.10               0.922    
+SexM:HI:infectionInfected      -0.946      2.828   -0.33               0.738    
+SexM:He:infectionInfected     -13.259      8.814   -1.50               0.134    
+HI:He:infectionInfected         1.862     11.199    0.17               0.868    
+SexM:HI:He:infectionInfected   16.039     14.882    1.08               0.282    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 2.4 on 288 degrees of freedom
+Multiple R-squared:  0.112,	Adjusted R-squared:  0.0656 
+F-statistic: 2.42 on 15 and 288 DF,  p-value: 0.00252
+
+
+> # Model 5: Focused model (biologically motivated)
+> model5 <- lm(predicted_weight_loss ~ Sex * (HI + He) * infection + HI:He,
++              data =  .... [TRUNCATED] 
+
+> summary(model5)
+
+Call:
+lm(formula = predicted_weight_loss ~ Sex * (HI + He) * infection + 
+    HI:He, data = immune_data)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-6.416 -1.827 -0.109  1.569  9.415 
+
+Coefficients:
+                          Estimate Std. Error t value            Pr(>|t|)    
+(Intercept)                  9.319      0.537   17.35 <0.0000000000000002 ***
+SexM                        -1.385      0.890   -1.56               0.121    
+HI                          -0.206      0.901   -0.23               0.820    
+He                           0.403      2.472    0.16               0.871    
+infectionInfected            2.350      0.999    2.35               0.019 *  
+SexM:HI                      1.482      1.058    1.40               0.162    
+SexM:He                      2.381      2.670    0.89               0.373    
+SexM:infectionInfected      -0.327      1.480   -0.22               0.825    
+HI:infectionInfected        -2.372      1.254   -1.89               0.060 .  
+He:infectionInfected         1.754      3.018    0.58               0.562    
+HI:He                        1.367      3.518    0.39               0.698    
+SexM:HI:infectionInfected    1.763      1.705    1.03               0.302    
+SexM:He:infectionInfected   -4.689      4.253   -1.10               0.271    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 2.4 on 291 degrees of freedom
+Multiple R-squared:  0.0989,	Adjusted R-squared:  0.0618 
+F-statistic: 2.66 on 12 and 291 DF,  p-value: 0.0021
+
+
+> # Compare models
+> cat("Model comparison (AIC):\n")
+Model comparison (AIC):
+
+> model_comparison <- data.frame(
++   Model = c("HI × He only", "Main effects", "Two-way", "Full three-way", "Focused"),
++   AIC = c(AIC(model1), AIC( .... [TRUNCATED] 
+
+> print(model_comparison %>% arrange(AIC))
+           Model  AIC  df
+1   Main effects 1407 299
+2        Two-way 1409 293
+3        Focused 1411 291
+4 Full three-way 1413 288
+5   HI × He only 1419 300
+
+> # Select best model
+> best_model <- model2  # or choose based on AIC
+
+> cat("\nUsing focused model for further analysis\n")
+
+Using focused model for further analysis
+
+> # ==============================================================================
+> # 4. VISUALIZE MODEL PREDICTIONS
+> # ============================ .... [TRUNCATED] 
+
+4. CREATING MODEL VISUALIZATIONS
+
+> cat("================================\n")
+================================
+
+> # A. Main effects plot using ggpredict
+> pred_main <- ggpredict(best_model, terms = c("HI [all]", "infection", "Sex"))
+
+> plot_main_effects <- ggplot(pred_main, aes(x = x, y = predicted, color = group)) +
++   geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = gro .... [TRUNCATED] 
+
+> plot_main_effects
+
+> save_plot_all_formats(plot_main_effects, "weight_loss_main_effects")
+? Saved weight_loss_main_effects as PDF
+? Saved weight_loss_main_effects as JPEG
+? All formats saved in folder: results/figures/weight_loss_main_effects 
+
+
+> # B. Heterozygosity effect visualization
+> pred_he <- ggpredict(best_model, terms = c("He [all]", "infection", "Sex"))
+
+> plot_he_effects <- ggplot(pred_he, aes(x = x, y = predicted, color = group)) +
++   geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group), .... [TRUNCATED] 
+
+> plot_he_effects
+
+> save_plot_all_formats(plot_he_effects, "weight_loss_heterozygosity_effects")
+? Saved weight_loss_heterozygosity_effects as PDF
+? Saved weight_loss_heterozygosity_effects as JPEG
+? All formats saved in folder: results/figures/weight_loss_heterozygosity_effects 
+
+
+> # C. Coefficient plot
+> coef_data <- tidy(best_model, conf.int = TRUE) %>%
++   filter(term != "(Intercept)") %>%
++   mutate(
++     term = str_replac .... [TRUNCATED] 
+
+> plot_coefficients <- ggplot(coef_data, aes(x = estimate, y = reorder(term, estimate))) +
++   geom_vline(xintercept = 0, linetype = "dashed", color = .... [TRUNCATED] 
+
+> plot_coefficients
+
+> save_plot_all_formats(plot_coefficients, "weight_loss_coefficients")
+? Saved weight_loss_coefficients as PDF
+? Saved weight_loss_coefficients as JPEG
+? All formats saved in folder: results/figures/weight_loss_coefficients 
+
+
+> # C. Coefficient plot second best
+> coef_data_3 <- tidy(model3, conf.int = TRUE) %>%
++   filter(term != "(Intercept)") %>%
++   mutate(
++     term =  .... [TRUNCATED] 
+
+> plot_coefficients_3 <- ggplot(coef_data_3, aes(x = estimate, y = reorder(term, estimate))) +
++   geom_vline(xintercept = 0, linetype = "dashed", col .... [TRUNCATED] 
+
+> plot_coefficients_3
+
+> save_plot_all_formats(plot_coefficients, "weight_loss_coefficients_HI")
+? Saved weight_loss_coefficients_HI as PDF
+? Saved weight_loss_coefficients_HI as JPEG
+? All formats saved in folder: results/figures/weight_loss_coefficients_HI 
 
 
 > # ==============================================================================
-> # 7. CREATE FINAL FIGURE PANEL
-> # ============================== .... [TRUNCATED] 
+> # 5. PATHWAY ANALYSIS WITH INTERACTIONS
+> # ===================== .... [TRUNCATED] 
 
-7. CREATING FINAL FIGURE PANEL
-
-> cat("==============================\n")
-==============================
-
-> # Panel A: UMAP plot showing immune state space (beautiful visualization)
-> panel_a_umap <- ggplot(immune_data, aes(x = UMAP1, y = UMAP2)) +
-+   # A .... [TRUNCATED] 
-
-> print(panel_a_umap)
-
-> # Panel B: Sex-specific trajectories in UMAP space
-> panel_b_trajectories <- ggplot() +
-+   # Individual points (background)
-+   geom_point(data = f .... [TRUNCATED] 
-
-> print(panel_b_trajectories)
-
-> # Panel C: Network heatmaps
-> create_network_heatmap <- function(cor_matrix, title) {
-+   # Reorder genes by hierarchical clustering
-+   gene_order  .... [TRUNCATED] 
-
-> # Calculate networks for the heatmaps
-> infected_data_for_cor <- immune_data %>% filter(infection_status == "Infected")
-
-> female_cor_matrix <- cor(
-+   infected_data_for_cor %>% filter(Sex == "F") %>% dplyr::select(all_of(immune_genes)),
-+   use = "complete.obs"
-+ )
-
-> male_cor_matrix <- cor(
-+   infected_data_for_cor %>% filter(Sex == "M") %>% dplyr::select(all_of(immune_genes)),
-+   use = "complete.obs"
-+ )
-
-> panel_c_female <- create_network_heatmap(female_cor_matrix, "c) Female Network (Infected)")
-
-> print(panel_c_female)
-
-> panel_d_male <- create_network_heatmap(male_cor_matrix, "d) Male Network (Infected)")
-
-> print(panel_d_male)
-
-> # Panel E: Key pathway trajectories with HI and He effects
-> if(length(key_pathways) > 0) {
-+   panel_e_data <- infected_pathways %>%
-+     pivot_lo .... [TRUNCATED] 
-
-> # Create final figure layout
-> final_figure_full <- (panel_a_umap | panel_b_trajectories) /
-+   (panel_c_female | panel_d_male) /
-+   panel_e +
-+    .... [TRUNCATED] 
-
-> print(final_figure_full)
-
-> # Save all plots
-> save_plot_all_formats(panel_a_umap, "Immune_landscape_UMAP")
-? Saved Immune_landscape_UMAP as PDF
-? Saved Immune_landscape_UMAP as JPEG
-? All formats saved in folder: results/figures/Immune_landscape_UMAP 
-
-
-> save_plot_all_formats(panel_b_trajectories, "Sex_specific_trajectories_UMAP")
-? Saved Sex_specific_trajectories_UMAP as PDF
-? Saved Sex_specific_trajectories_UMAP as JPEG
-? All formats saved in folder: results/figures/Sex_specific_trajectories_UMAP 
-
-
-> save_plot_all_formats(panel_c_female, "Female_network_heatmap")
-? Saved Female_network_heatmap as PDF
-? Saved Female_network_heatmap as JPEG
-? All formats saved in folder: results/figures/Female_network_heatmap 
-
-
-> save_plot_all_formats(panel_d_male, "Male_network_heatmap")
-? Saved Male_network_heatmap as PDF
-? Saved Male_network_heatmap as JPEG
-? All formats saved in folder: results/figures/Male_network_heatmap 
-
-
-> if(exists("panel_e")) save_plot_all_formats(panel_e, "Pathway_interactions")
-? Saved Pathway_interactions as PDF
-? Saved Pathway_interactions as JPEG
-? All formats saved in folder: results/figures/Pathway_interactions 
-
-
-> save_plot_all_formats_panel(final_figure_full, "Figure3_immune_mechanisms_full")
-? Saved Figure3_immune_mechanisms_full as PDF
-? Saved Figure3_immune_mechanisms_full as JPEG
-? All formats saved in folder: results/figures/Figure3_immune_mechanisms_full 
-
-
-> # ==============================================================================
-> # INDIVIDUAL GENE ANALYSIS
-> # ================================== .... [TRUNCATED] 
-
-TESTING INDIVIDUAL GENES FOR SEX × HI INTERACTIONS
+5. TESTING PATHWAYS WITH HI × He × SEX × INFECTION
 
 > cat("==================================================\n")
 ==================================================
 
-> # Test each gene individually using the ORIGINAL normalized values
-> gene_level_results <- map_df(immune_genes, function(gene) {
-+ 
-+   # Get gene d .... [TRUNCATED] 
+> # Function to test each pathway
+> test_pathway_interactions <- function(pathway_name, data) {
++   formula <- as.formula(paste(pathway_name, "~ Sex * ..." ... [TRUNCATED] 
+
+> # Test all pathways
+> pathway_results <- map_df(pathway_names, ~test_pathway_interactions(.x, immune_data))
 
 > # Apply FDR correction
-> gene_level_results <- gene_level_results %>%
+> pathway_results <- pathway_results %>%
 +   mutate(
-+     Linear_padj = p.adjust(Linear_p, method = "fdr"),
-+     Nonl .... [TRUNCATED] 
++     Sex_HI_padj = p.adjust(Sex_HI_p, method = "BH"),
++     Sex_He_padj .... [TRUNCATED] 
 
-> cat("\nTop genes with Sex × HI/He interactions:\n")
+> cat("Pathway interaction results (FDR corrected):\n")
+Pathway interaction results (FDR corrected):
 
-Top genes with Sex × HI/He interactions:
+> print(pathway_results)
+          Pathway Sex_HI_p Sex_He_p HI_He_p Sex_infection_p R_squared Sex_HI_padj Sex_He_padj HI_He_padj Sex_infection_padj
+1    Inflammation   0.8107   0.4673  0.9557          0.8686   0.03716      0.9458      0.7872     0.9557             0.9441
+2    Cytotoxicity   0.9520   0.4703  0.2368          0.3043   0.07387      0.9520      0.7872     0.8943             0.7101
+3 Th1_Th2_balance   0.0456   0.5143  0.3287          0.2479   0.04344      0.3192      0.7872     0.8943             0.7101
+4 Innate_immunity   0.7817   0.5719  0.9209          0.9116   0.03919      0.9458      0.7872     0.9557             0.9441
+5    Th1_response   0.1209   0.6043  0.4507          0.9441   0.05088      0.4230      0.7872     0.8943             0.9441
+6      Regulation   0.5564   0.6748  0.5110          0.4376   0.04567      0.9458      0.7872     0.8943             0.7657
+7       Th2_mucus   0.5944   0.8708  0.7934          0.2724   0.02565      0.9458      0.8708     0.9557             0.7101
 
-> print(gene_level_results %>% head(10))
-     Gene Linear_p Nonlinear_p Linear_coef Nonlinear_coef Overall_p Linear_padj Nonlinear_padj Overall_padj Significant_linear Significant_nonlinear Significant_overall
-1    IFNy  0.46179     0.09164      1.4753         8.3914    0.1501      0.8812         0.8815       0.9684              FALSE                 FALSE               FALSE
-2   IL.13  0.09105     0.30840      3.0806        -4.5703    0.1750      0.8812         0.8815       0.9684              FALSE                 FALSE               FALSE
-3   CXCR3  0.84141     0.11741      0.4451         8.6441    0.2679      0.9280         0.8815       0.9684              FALSE                 FALSE               FALSE
-4    MUC2  0.18206     0.75601      2.8684        -1.6444    0.4057      0.8812         0.8815       0.9684              FALSE                 FALSE               FALSE
-5    NCR1  0.21869     0.53624     -2.2187         2.7498    0.4224      0.8812         0.8815       0.9684              FALSE                 FALSE               FALSE
-6    IDO1  0.37644     0.41883      1.6583         3.7433    0.4353      0.8812         0.8815       0.9684              FALSE                 FALSE               FALSE
-7   IL1RN  0.27544     0.88146      2.2559        -0.7602    0.5504      0.8812         0.8815       0.9684              FALSE                 FALSE               FALSE
-8   SOCS1  0.73792     0.31639      0.6813        -5.0480    0.5924      0.8812         0.8815       0.9684              FALSE                 FALSE               FALSE
-9  MUC5AC  0.32904     0.77810      2.0865        -1.4855    0.6130      0.8812         0.8815       0.9684              FALSE                 FALSE               FALSE
-10    TNF  0.42544     0.67458      1.6891         2.1960    0.6305      0.8812         0.8815       0.9684              FALSE                 FALSE               FALSE
+> # Visualize top pathway
+> 
+> # Select top pathway based on adjusted p-value for Sex × HI interaction
+> top_pathway <- pathway_results %>%
++   arrang .... [TRUNCATED] 
 
-> # Visualize top individual genes (without _z suffix)
-> top_genes <- gene_level_results %>%
-+   filter(Overall_p < 0.1) %>%
-+   pull(Gene)
+> # Build model
+> formula_top <- as.formula(paste(top_pathway, "~ Sex * (HI + He) * infection + HI:He"))
 
-> if(length(top_genes) > 0) {
-+   top_genes_plot <- infected_pathways %>%
-+     pivot_longer(cols = all_of(top_genes[1:min(4, length(top_genes))]),
-+  .... [TRUNCATED] 
+> model_top <- lm(formula_top, data = immune_data)
 
-> # Create heatmap of gene-level interactions
-> gene_heatmap_data <- gene_level_results %>%
-+   mutate(
-+     Gene = factor(Gene, levels = Gene[order( .... [TRUNCATED] 
+> # Predict
+> pred_pathway <- ggpredict(model_top, terms = c("HI [all]", "infection", "Sex"))
 
-> gene_interaction_heatmap <- ggplot(gene_heatmap_data,
-+                                    aes(x = Effect_type, y = Gene, fill = Effect_size)) +
-+   .... [TRUNCATED] 
+> # Plot
+> plot_top_pathway <- ggplot(pred_pathway, aes(x = x, y = predicted, color = group)) +
++   geom_ribbon(aes(ymin = conf.low, ymax = conf.high, .... [TRUNCATED] 
 
-> print(gene_interaction_heatmap)
+> plot_top_pathway
 
-> save_plot_all_formats(gene_interaction_heatmap, "Gene_level_interactions_heatmap")
-? Saved Gene_level_interactions_heatmap as PDF
-? Saved Gene_level_interactions_heatmap as JPEG
-? All formats saved in folder: results/figures/Gene_level_interactions_heatmap 
+> # Save
+> save_plot_all_formats(plot_top_pathway, paste0("pathway_", top_pathway))
+? Saved pathway_Th1_Th2_balance as PDF
+? Saved pathway_Th1_Th2_balance as JPEG
+? All formats saved in folder: results/figures/pathway_Th1_Th2_balance 
 
 
 > # ==============================================================================
-> # 8. CREATE SUMMARY TABLE FOR MANUSCRIPT
-> # ==================== .... [TRUNCATED] 
+> # 6. PERMANOVA WITH INFECTION STATUS
+> # ======================== .... [TRUNCATED] 
 
-8. CREATING SUMMARY TABLE FOR MANUSCRIPT
+6. PERMANOVA - MULTIVARIATE IMMUNE DIFFERENCES
 
-> cat("========================================\n")
-========================================
-
-> # Create a comprehensive summary table of key findings
-> summary_table_data <- bind_rows(
-+   # Pathway results
-+   pathway_interaction_results %>%
- .... [TRUNCATED] 
-
-> if(nrow(summary_table_data) > 0) {
-+   summary_table <- summary_table_data %>%
-+     gt() %>%
-+     tab_header(
-+       title = "Sex × Hybrid Index  ..." ... [TRUNCATED] 
-
-> # ==============================================================================
-> # 9. SAVE ALL OUTPUTS
-> # ======================================= .... [TRUNCATED] 
-
-9. SAVING ALL OUTPUTS
-
-> cat("=====================\n")
-=====================
-
-> # Save analysis results
-> saveRDS(list(
-+   pathway_scores = immune_pathways,
-+   pathway_interactions = pathway_interaction_results,
-+   parasiteLo .... [TRUNCATED] 
-Error in eval(ei, envir) : object 'gene_network_disruption' not found
-In addition: Warning messages:
-1: ggrepel: 19 unlabeled data points (too many overlaps). Consider increasing max.overlaps 
-2: ggrepel: 19 unlabeled data points (too many overlaps). Consider increasing max.overlaps 
-3: ggrepel: 19 unlabeled data points (too many overlaps). Consider increasing max.overlaps 
-4: package ‘umap’ was built under R version 4.3.3 
-5: There was 1 warning in `summarise()`.
-? In argument: `coherence = { ... }`.
-? In group 1: `Sex = F`, `HI_bin = "[0,0.1]"`.
-Caused by warning:
-! `cur_data()` was deprecated in dplyr 1.1.0.
-? Please use `pick()` instead.
-This warning is displayed once every 8 hours.
-Call `lifecycle::last_lifecycle_warnings()` to see where this warning was generated. 
-> # ==============================================================================
-> # MULTIVARIATE IMMUNE ANALYSIS: Systems-Level Dysregulation in Hybrid Mice
-> # ==============================================================================
-> # Purpose: Test multivariate immune patterns showing why Random Forest succeeds
-> # where univariate tests fail - immune dysregulation is a systems phenomenon
-> # Author: Fay Webster
-> # Date: December 2024
-> # ==============================================================================
-> # Fix the Sex variable for GAM
-> infected_data <- field_mice %>%
-+   filter(infection_status == "TRUE")
-> uninfected_data <- field_mice %>%
-+   filter(infection_status == "FALSE")
-> infected_data$Sex <- as.factor(infected_data$Sex)
-> uninfected_data$Sex <- as.factor(uninfected_data$Sex)
-> 
-> cat("\n")
-
-> print_section("MULTIVARIATE IMMUNE ANALYSIS")
-
- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-MULTIVARIATE IMMUNE ANALYSIS 
-= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-
-> cat("Testing systems-level immune dysregulation in hybrid mice\n\n")
-Testing systems-level immune dysregulation in hybrid mice
-
-> 
-> # ==============================================================================
-> # 1. DATA PREPARATION
-> # ==============================================================================
-> 
-> cat("1. PREPARING DATA FOR MULTIVARIATE ANALYSIS\n")
-1. PREPARING DATA FOR MULTIVARIATE ANALYSIS
-> cat("==========================================\n")
-==========================================
-> 
-> # Use your existing setup from script 5
-> immune_data <- field_mice %>%
-+   dplyr::select(Mouse_ID, HI, Sex, infection_status, predicted_weight_loss,
-+                 all_of(immune_genes)) %>%
-+   filter(!is.na(HI) & !is.na(infection_status)) %>%
-+   mutate(
-+     He = 2 * HI * (1 - HI),
-+     hybrid_category = case_when(
-+       HI < 0.2 ~ "Parental",
-+       HI > 0.8 ~ "Parental",
-+       TRUE ~ "Hybrid"
-+     ),
-+     group = paste(Sex, infection_status, sep = "_"),
-+     infection_status = factor(infection_status,
-+                               levels = c("FALSE", "TRUE"),
-+                               labels = c("Uninfected", "Infected"))
-+   )
-> 
-> # Handle missing values
-> immune_data <- immune_data %>%
-+   group_by(Sex, infection_status) %>%
-+   mutate(across(all_of(immune_genes), ~ifelse(is.na(.), median(., na.rm = TRUE), .))) %>%
-+   ungroup()
-> 
-> 
-> # Focus on infected mice
-> infected_data <- immune_data %>% filter(infection_status == "Infected")
-> 
-> cat("? Data prepared: n =", nrow(infected_data), "infected mice\n")
-? Data prepared: n = 133 infected mice
-> cat("? Females:", sum(infected_data$Sex == "F"), "\n")
-? Females: 60 
-> cat("? Males:", sum(infected_data$Sex == "M"), "\n\n")
-? Males: 73 
-
-> 
-> # ==============================================================================
-> # 2. PCA ANALYSIS - OVERALL IMMUNE DIVERGENCE
-> # ==============================================================================
-> 
-> cat("2. PCA ANALYSIS OF IMMUNE PROFILES\n")
-2. PCA ANALYSIS OF IMMUNE PROFILES
-> cat("==================================\n")
-==================================
-> 
-> # Run PCA
-> pca_result <- prcomp(infected_data[, immune_genes], scale. = TRUE, center = TRUE)
-> var_explained <- round(100 * pca_result$sdev^2 / sum(pca_result$sdev^2), 1)
-> 
-> # Add PC scores to data
-> infected_data$PC1 <- pca_result$x[,1]
-> infected_data$PC2 <- pca_result$x[,2]
-> infected_data$PC3 <- pca_result$x[,3]
-> 
-> cat("PC1 explains:", var_explained[1], "% of variance\n")
-PC1 explains: 47.1 % of variance
-> cat("PC2 explains:", var_explained[2], "% of variance\n")
-PC2 explains: 10.5 % of variance
-> cat("PC3 explains:", var_explained[3], "% of variance\n\n")
-PC3 explains: 9 % of variance
-
-> 
-> # Test if PC trajectories differ by Sex × HI
-> pc_models <- list()
-> for(pc in c("PC1", "PC2", "PC3")) {
-+   model <- lm(as.formula(paste(pc, "~ Sex * poly(HI, 2)")), data = infected_data)
-+   pc_models[[pc]] <- model
-+ 
-+   interaction_p <- anova(model)["Sex:poly(HI, 2)", "Pr(>F)"]
-+   cat(sprintf("%s: Sex × HI interaction p = %.4f\n", pc, interaction_p))
-+ }
-PC1: Sex × HI interaction p = 0.7630
-PC2: Sex × HI interaction p = 0.5951
-PC3: Sex × HI interaction p = 0.5368
-> 
-> # PERMANOVA test for multivariate differences
-> cat("\n3. PERMANOVA - MULTIVARIATE IMMUNE DIFFERENCES\n")
-
-3. PERMANOVA - MULTIVARIATE IMMUNE DIFFERENCES
 > cat("==============================================\n")
 ==============================================
-> 
-> library(vegan)
-> immune_matrix <- as.matrix(infected_data[, immune_genes])
-> 
-> # Test full model
+
+> # Prepare immune matrix
+> immune_matrix <- as.matrix(immune_data[, available_genes])
+
+> # Full model with infection
 > permanova_full <- adonis2(
-+   immune_matrix ~ Sex * HI * He,
-+   data = infected_data,
-+   permutations = 999,
-+   method = "euclidean"
-+ )
++   immune_matrix ~ Sex * HI * He * infection,
++   data = immune_data,
++   permutations = 9 .... [TRUNCATED] 
+
+
+> # ==============================================================================
+> # IMMUNE ANALYSIS WITH HYBRID INDEX × HETEROZYGOSITY INTERACTIONS .... [TRUNCATED] 
+
+> cat("\n=== IMMUNE ANALYSIS: HI × He INTERACTIONS WITH INFECTION ===\n")
+
+=== IMMUNE ANALYSIS: HI × He INTERACTIONS WITH INFECTION ===
+
+> cat("Complete dataset approach for maximum statistical power\n\n")
+Complete dataset approach for maximum statistical power
+
+
+> # ==============================================================================
+> # 1. DATA PREPARATION
+> # ======================================= .... [TRUNCATED] 
+1. PREPARING COMPLETE DATASET
+
+> cat("=============================\n")
+=============================
+
+> # Filter to available genes
+> available_genes <- immune_genes[immune_genes %in% names(field_mice)]
+
+> cat("Available immune genes:", length(available_genes), "\n")
+Available immune genes: 19 
+
+> # Create complete dataset with all interactions
+> immune_data <- field_mice %>%
++   dplyr::select(Mouse_ID, HI, Sex, infection_status, predicted_wei .... [TRUNCATED] 
+
+> # Handle missing values in immune genes
+> immune_data <- immune_data %>%
++   group_by(Sex, infection) %>%
++   mutate(across(all_of(available_genes), .... [TRUNCATED] 
+
+> cat("? Total mice:", nrow(immune_data), "\n")
+? Total mice: 304 
+
+> cat("? By infection status:\n")
+? By infection status:
+
+> print(table(immune_data$infection, immune_data$Sex))
+            
+              F  M
+  Uninfected 91 80
+  Infected   60 73
+
+> cat("\n")
+
+
+> # ==============================================================================
+> # 2. CREATE BIOLOGICAL PATHWAY SCORES
+> # ======================= .... [TRUNCATED] 
+2. CREATING IMMUNE PATHWAY SCORES
+
+> cat("=================================\n")
+=================================
+
+> # Calculate pathway scores using complete dataset
+> calculate_pathways <- function(data, genes) {
++   pathways <- list()
++ 
++   # Th1 response (anti .... [TRUNCATED] 
+
+> # Add pathway scores to dataset
+> pathway_scores <- calculate_pathways(immune_data, available_genes)
+
+> for (pathway in names(pathway_scores)) {
++   immune_data[[pathway]] <- pathway_scores[[pathway]]
++ }
+
+> pathway_names <- names(pathway_scores)
+
+> cat("? Created", length(pathway_names), "pathway scores\n\n")
+? Created 7 pathway scores
+
+
+> # ==============================================================================
+> # 3. TEST MULTIPLE MODEL STRUCTURES FOR PREDICTED WEIGHT LOSS
+> # .... [TRUNCATED] 
+3. TESTING MODEL STRUCTURES FOR PREDICTED WEIGHT LOSS
+
+> cat("====================================================\n")
+====================================================
+
+> # Model 1: Simple HI × He
+> model1 <- lm(predicted_weight_loss ~ HI * He, data = immune_data)
+
+> summary(model1)
+
+Call:
+lm(formula = predicted_weight_loss ~ HI * He, data = immune_data)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-6.495 -1.861 -0.331  1.740  8.777 
+
+Coefficients:
+            Estimate Std. Error t value            Pr(>|t|)    
+(Intercept)    9.570      0.411   23.27 <0.0000000000000002 ***
+HI            -0.154      0.666   -0.23                0.82    
+He            -0.392      2.035   -0.19                0.85    
+HI:He          4.015      3.436    1.17                0.24    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 2.47 on 300 degrees of freedom
+Multiple R-squared:  0.0191,	Adjusted R-squared:  0.00927 
+F-statistic: 1.94 on 3 and 300 DF,  p-value: 0.122
+
+
+> # Model 2: Main effects only
+> model2 <- lm(predicted_weight_loss ~ Sex + HI + He + infection, data = immune_data)
+
+> summary(model2)
+
+Call:
+lm(formula = predicted_weight_loss ~ Sex + HI + He + infection, 
+    data = immune_data)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-6.224 -1.790 -0.292  1.667  8.972 
+
+Coefficients:
+                  Estimate Std. Error t value            Pr(>|t|)    
+(Intercept)         9.0534     0.3717   24.35 <0.0000000000000002 ***
+SexM               -0.0901     0.2784   -0.32                0.75    
+HI                  0.1854     0.4063    0.46                0.65    
+He                  1.5562     1.0144    1.53                0.13    
+infectionInfected   1.1247     0.2852    3.94              0.0001 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 2.42 on 299 degrees of freedom
+Multiple R-squared:  0.0633,	Adjusted R-squared:  0.0508 
+F-statistic: 5.05 on 4 and 299 DF,  p-value: 0.000591
+
+
+> # Model 3: Two-way interactions
+> model3 <- lm(predicted_weight_loss ~ Sex * HI + Sex * He + HI * He +
++                Sex * infection + HI * infec .... [TRUNCATED] 
+
+> summary(model3)
+
+Call:
+lm(formula = predicted_weight_loss ~ Sex * HI + Sex * He + HI * 
+    He + Sex * infection + HI * infection + He * infection, data = immune_data)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-6.324 -1.843 -0.054  1.566  9.557 
+
+Coefficients:
+                       Estimate Std. Error t value            Pr(>|t|)    
+(Intercept)               9.316      0.514   18.14 <0.0000000000000002 ***
+SexM                     -1.308      0.736   -1.78              0.0765 .  
+HI                       -0.670      0.828   -0.81              0.4191    
+He                        1.286      2.379    0.54              0.5893    
+infectionInfected         2.320      0.795    2.92              0.0038 ** 
+SexM:HI                   2.144      0.833    2.57              0.0105 *  
+SexM:He                   0.547      2.076    0.26              0.7925    
+HI:He                     1.692      3.508    0.48              0.6300    
+SexM:infectionInfected   -0.369      0.571   -0.65              0.5187    
+HI:infectionInfected     -1.299      0.841   -1.55              0.1234    
+He:infectionInfected     -0.908      2.095   -0.43              0.6652    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 2.4 on 293 degrees of freedom
+Multiple R-squared:  0.0927,	Adjusted R-squared:  0.0617 
+F-statistic: 2.99 on 10 and 293 DF,  p-value: 0.00131
+
+
+> # Model 4: Three-way interactions (full model)
+> model4 <- lm(predicted_weight_loss ~ Sex * HI * He * infection, data = immune_data)
+
+> summary(model4)
+
+Call:
+lm(formula = predicted_weight_loss ~ Sex * HI * He * infection, 
+    data = immune_data)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-6.206 -1.690 -0.162  1.576  9.237 
+
+Coefficients:
+                             Estimate Std. Error t value            Pr(>|t|)    
+(Intercept)                     9.154      0.575   15.93 <0.0000000000000002 ***
+SexM                           -1.688      1.106   -1.53               0.128    
+HI                              0.352      1.140    0.31               0.758    
+He                              2.262      3.398    0.67               0.506    
+infectionInfected               2.417      1.125    2.15               0.032 *  
+SexM:HI                         1.699      1.724    0.99               0.325    
+SexM:He                         3.175      5.327    0.60               0.552    
+HI:He                          -2.521      6.017   -0.42               0.675    
+SexM:infectionInfected          1.026      1.770    0.58               0.563    
+HI:infectionInfected           -2.649      2.007   -1.32               0.188    
+He:infectionInfected            0.952      6.451    0.15               0.883    
+SexM:HI:He                     -0.866      8.845   -0.10               0.922    
+SexM:HI:infectionInfected      -0.946      2.828   -0.33               0.738    
+SexM:He:infectionInfected     -13.259      8.814   -1.50               0.134    
+HI:He:infectionInfected         1.862     11.199    0.17               0.868    
+SexM:HI:He:infectionInfected   16.039     14.882    1.08               0.282    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 2.4 on 288 degrees of freedom
+Multiple R-squared:  0.112,	Adjusted R-squared:  0.0656 
+F-statistic: 2.42 on 15 and 288 DF,  p-value: 0.00252
+
+
+> # Model 5: Focused model (biologically motivated)
+> model5 <- lm(predicted_weight_loss ~ Sex * (HI + He) * infection + HI:He,
++              data =  .... [TRUNCATED] 
+
+> summary(model5)
+
+Call:
+lm(formula = predicted_weight_loss ~ Sex * (HI + He) * infection + 
+    HI:He, data = immune_data)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-6.416 -1.827 -0.109  1.569  9.415 
+
+Coefficients:
+                          Estimate Std. Error t value            Pr(>|t|)    
+(Intercept)                  9.319      0.537   17.35 <0.0000000000000002 ***
+SexM                        -1.385      0.890   -1.56               0.121    
+HI                          -0.206      0.901   -0.23               0.820    
+He                           0.403      2.472    0.16               0.871    
+infectionInfected            2.350      0.999    2.35               0.019 *  
+SexM:HI                      1.482      1.058    1.40               0.162    
+SexM:He                      2.381      2.670    0.89               0.373    
+SexM:infectionInfected      -0.327      1.480   -0.22               0.825    
+HI:infectionInfected        -2.372      1.254   -1.89               0.060 .  
+He:infectionInfected         1.754      3.018    0.58               0.562    
+HI:He                        1.367      3.518    0.39               0.698    
+SexM:HI:infectionInfected    1.763      1.705    1.03               0.302    
+SexM:He:infectionInfected   -4.689      4.253   -1.10               0.271    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 2.4 on 291 degrees of freedom
+Multiple R-squared:  0.0989,	Adjusted R-squared:  0.0618 
+F-statistic: 2.66 on 12 and 291 DF,  p-value: 0.0021
+
+
+> # Compare models
+> cat("Model comparison (AIC):\n")
+Model comparison (AIC):
+
+> model_comparison <- data.frame(
++   Model = c("HI × He only", "Main effects", "Two-way", "Full three-way", "Focused"),
++   AIC = c(AIC(model1), AIC( .... [TRUNCATED] 
+
+> print(model_comparison %>% arrange(AIC))
+           Model  AIC  df
+1   Main effects 1407 299
+2        Two-way 1409 293
+3        Focused 1411 291
+4 Full three-way 1413 288
+5   HI × He only 1419 300
+
+> # Select best model
+> best_model <- model2  # or choose based on AIC
+
+> cat("\nUsing focused model for further analysis\n")
+
+Using focused model for further analysis
+
+> # ==============================================================================
+> # 4. VISUALIZE MODEL PREDICTIONS
+> # ============================ .... [TRUNCATED] 
+
+4. CREATING MODEL VISUALIZATIONS
+
+> cat("================================\n")
+================================
+
+> # A. Main effects plot using ggpredict
+> pred_main <- ggpredict(best_model, terms = c("HI [all]", "infection", "Sex"))
+
+> plot_main_effects <- ggplot(pred_main, aes(x = x, y = predicted, color = group)) +
++   geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = gro .... [TRUNCATED] 
+
+> plot_main_effects
+
+> save_plot_all_formats(plot_main_effects, "weight_loss_main_effects")
+? Saved weight_loss_main_effects as PDF
+? Saved weight_loss_main_effects as JPEG
+? All formats saved in folder: results/figures/weight_loss_main_effects 
+
+
+> # B. Heterozygosity effect visualization
+> pred_he <- ggpredict(best_model, terms = c("He [all]", "infection", "Sex"))
+
+> plot_he_effects <- ggplot(pred_he, aes(x = x, y = predicted, color = group)) +
++   geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group), .... [TRUNCATED] 
+
+> plot_he_effects
+
+> save_plot_all_formats(plot_he_effects, "weight_loss_heterozygosity_effects")
+? Saved weight_loss_heterozygosity_effects as PDF
+? Saved weight_loss_heterozygosity_effects as JPEG
+? All formats saved in folder: results/figures/weight_loss_heterozygosity_effects 
+
+
+> # C. Coefficient plot
+> coef_data <- tidy(best_model, conf.int = TRUE) %>%
++   filter(term != "(Intercept)") %>%
++   mutate(
++     term = str_replac .... [TRUNCATED] 
+
+> plot_coefficients <- ggplot(coef_data, aes(x = estimate, y = reorder(term, estimate))) +
++   geom_vline(xintercept = 0, linetype = "dashed", color = .... [TRUNCATED] 
+
+> plot_coefficients
+
+> save_plot_all_formats(plot_coefficients, "weight_loss_coefficients")
+? Saved weight_loss_coefficients as PDF
+? Saved weight_loss_coefficients as JPEG
+? All formats saved in folder: results/figures/weight_loss_coefficients 
+
+
+> # C. Coefficient plot second best
+> coef_data_3 <- tidy(model3, conf.int = TRUE) %>%
++   filter(term != "(Intercept)") %>%
++   mutate(
++     term =  .... [TRUNCATED] 
+
+> plot_coefficients_3 <- ggplot(coef_data_3, aes(x = estimate, y = reorder(term, estimate))) +
++   geom_vline(xintercept = 0, linetype = "dashed", col .... [TRUNCATED] 
+
+> plot_coefficients_3
+
+> save_plot_all_formats(plot_coefficients, "weight_loss_coefficients_HI")
+? Saved weight_loss_coefficients_HI as PDF
+? Saved weight_loss_coefficients_HI as JPEG
+? All formats saved in folder: results/figures/weight_loss_coefficients_HI 
+
+
+> # ==============================================================================
+> # 5. PATHWAY ANALYSIS WITH INTERACTIONS
+> # ===================== .... [TRUNCATED] 
+
+5. TESTING PATHWAYS WITH HI × He × SEX × INFECTION
+
+> cat("==================================================\n")
+==================================================
+
+> # Function to test each pathway
+> test_pathway_interactions <- function(pathway_name, data) {
++   formula <- as.formula(paste(pathway_name, "~ Sex * ..." ... [TRUNCATED] 
+
+> # Test all pathways
+> pathway_results <- map_df(pathway_names, ~test_pathway_interactions(.x, immune_data))
+
+> # Apply FDR correction
+> pathway_results <- pathway_results %>%
++   mutate(
++     Sex_HI_padj = p.adjust(Sex_HI_p, method = "BH"),
++     Sex_He_padj .... [TRUNCATED] 
+
+> cat("Pathway interaction results (FDR corrected):\n")
+Pathway interaction results (FDR corrected):
+
+> print(pathway_results)
+          Pathway Sex_HI_p Sex_He_p HI_He_p Sex_infection_p R_squared Sex_HI_padj Sex_He_padj HI_He_padj Sex_infection_padj
+1    Inflammation   0.8107   0.4673  0.9557          0.8686   0.03716      0.9458      0.7872     0.9557             0.9441
+2    Cytotoxicity   0.9520   0.4703  0.2368          0.3043   0.07387      0.9520      0.7872     0.8943             0.7101
+3 Th1_Th2_balance   0.0456   0.5143  0.3287          0.2479   0.04344      0.3192      0.7872     0.8943             0.7101
+4 Innate_immunity   0.7817   0.5719  0.9209          0.9116   0.03919      0.9458      0.7872     0.9557             0.9441
+5    Th1_response   0.1209   0.6043  0.4507          0.9441   0.05088      0.4230      0.7872     0.8943             0.9441
+6      Regulation   0.5564   0.6748  0.5110          0.4376   0.04567      0.9458      0.7872     0.8943             0.7657
+7       Th2_mucus   0.5944   0.8708  0.7934          0.2724   0.02565      0.9458      0.8708     0.9557             0.7101
+
+> # Visualize top pathway
 > 
-> cat("PERMANOVA Results:\n")
-PERMANOVA Results:
+> # Select top pathway based on adjusted p-value for Sex × HI interaction
+> top_pathway <- pathway_results %>%
++   arrang .... [TRUNCATED] 
+
+> # Build model
+> formula_top <- as.formula(paste(top_pathway, "~ Sex * (HI + He) * infection + HI:He"))
+
+> model_top <- lm(formula_top, data = immune_data)
+
+> # Predict
+> pred_pathway <- ggpredict(model_top, terms = c("HI [all]", "infection", "Sex"))
+
+> # Plot
+> plot_top_pathway <- ggplot(pred_pathway, aes(x = x, y = predicted, color = group)) +
++   geom_ribbon(aes(ymin = conf.low, ymax = conf.high, .... [TRUNCATED] 
+
+> plot_top_pathway
+
+> # Save
+> save_plot_all_formats(plot_top_pathway, paste0("pathway_", top_pathway))
+? Saved pathway_Th1_Th2_balance as PDF
+? Saved pathway_Th1_Th2_balance as JPEG
+? All formats saved in folder: results/figures/pathway_Th1_Th2_balance 
+
+
+> # ==============================================================================
+> # 6. PERMANOVA WITH INFECTION STATUS
+> # ======================== .... [TRUNCATED] 
+
+6. PERMANOVA - MULTIVARIATE IMMUNE DIFFERENCES
+
+> cat("==============================================\n")
+==============================================
+
+> # Prepare immune matrix
+> immune_matrix <- as.matrix(immune_data[, available_genes])
+
+> # Full model with infection
+> permanova_full <- adonis2(
++   immune_matrix ~ Sex * HI * He * infection,
++   data = immune_data,
++   permutations = 9 .... [TRUNCATED] 
+
+> cat("PERMANOVA Results (with infection):\n")
+PERMANOVA Results (with infection):
+
 > print(permanova_full)
 Permutation test for adonis under reduced model
 Terms added sequentially (first to last)
 Permutation: free
 Number of permutations: 999
 
-adonis2(formula = immune_matrix ~ Sex * HI * He, data = infected_data, permutations = 999, method = "euclidean")
-           Df SumOfSqs    R2    F Pr(>F)
-Sex         1      233 0.007 0.91   0.42
-HI          1      367 0.011 1.43   0.21
-He          1      331 0.010 1.29   0.23
-Sex:HI      1      159 0.005 0.62   0.65
-Sex:He      1      136 0.004 0.53   0.75
-HI:He       1      142 0.004 0.55   0.75
-Sex:HI:He   1      242 0.007 0.94   0.40
-Residual  125    32102 0.952            
-Total     132    33712 1.000            
-> 
-> # ==============================================================================
-> # 4. NETWORK COHERENCE ANALYSIS
-> # ==============================================================================
-> 
-> cat("\n4. NETWORK COHERENCE ANALYSIS\n")
-
-4. NETWORK COHERENCE ANALYSIS
-> cat("=============================\n")
-=============================
-> 
-> # Function to calculate network coherence
-> calculate_network_coherence <- function(data, genes) {
-+   cor_matrix <- cor(data[, genes], use = "pairwise.complete.obs")
-+   # Mean absolute correlation (network coherence)
-+   coherence <- mean(abs(cor_matrix[upper.tri(cor_matrix)]), na.rm = TRUE)
-+   return(coherence)
-+ }
-> 
-> # Calculate coherence along HI gradient
-> coherence_results <- infected_data %>%
-+   mutate(HI_bin = cut(HI, breaks = seq(0, 1, by = 0.1), include.lowest = TRUE)) %>%
-+   group_by(Sex, HI_bin) %>%
-+   summarise(
-+     n = n(),
-+     mean_HI = mean(HI),
-+     mean_He = mean(He),
-+     coherence = ifelse(n >= 5,
-+                        calculate_network_coherence(pick(everything()), immune_genes),
-+                        NA),
-+     .groups = "drop"
-+   ) %>%
-+   filter(!is.na(coherence))
-> 
-> # Test coherence differences
-> coherence_model <- lm(coherence ~ Sex * poly(mean_HI, 2), data = coherence_results)
-> cat("\nNetwork Coherence Model:\n")
-
-Network Coherence Model:
-> print(summary(coherence_model))
-
-Call:
-lm(formula = coherence ~ Sex * poly(mean_HI, 2), data = coherence_results)
-
-Residuals:
-       1        2        3        4        5        6        7        8        9       10 
--0.00106  0.07466 -0.11356  0.03996 -0.04043 -0.05426  0.14401 -0.08189 -0.07488  0.10745 
-
-Coefficients:
-                       Estimate Std. Error t value Pr(>|t|)   
-(Intercept)              0.4530     0.0727    6.23   0.0034 **
-SexM                     0.0269     0.0911    0.29   0.7827   
-poly(mean_HI, 2)1       -0.0805     0.2280   -0.35   0.7419   
-poly(mean_HI, 2)2        0.1184     0.2497    0.47   0.6601   
-SexM:poly(mean_HI, 2)1  -0.1591     0.2866   -0.55   0.6085   
-SexM:poly(mean_HI, 2)2  -0.2184     0.2993   -0.73   0.5061   
+adonis2(formula = immune_matrix ~ Sex * HI * He * infection, data = immune_data, permutations = 999, method = "euclidean")
+                     Df SumOfSqs    R2    F Pr(>F)  
+Sex                   1      332 0.004 1.34  0.216  
+HI                    1      300 0.004 1.21  0.246  
+He                    1      242 0.003 0.98  0.388  
+infection             1      672 0.009 2.72  0.031 *
+Sex:HI                1      248 0.003 1.00  0.373  
+Sex:He                1      128 0.002 0.52  0.795  
+HI:He                 1      167 0.002 0.68  0.615  
+Sex:infection         1      125 0.002 0.50  0.816  
+HI:infection          1      436 0.006 1.77  0.115  
+He:infection          1      273 0.004 1.11  0.292  
+Sex:HI:He             1      760 0.010 3.08  0.020 *
+Sex:HI:infection      1      187 0.002 0.76  0.554  
+Sex:He:infection      1      109 0.001 0.44  0.870  
+HI:He:infection       1      243 0.003 0.98  0.365  
+Sex:HI:He:infection   1      155 0.002 0.63  0.678  
+Residual            288    71139 0.942              
+Total               303    75515 1.000              
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-Residual standard error: 0.132 on 4 degrees of freedom
-Multiple R-squared:  0.45,	Adjusted R-squared:  -0.237 
-F-statistic: 0.655 on 5 and 4 DF,  p-value: 0.677
+> # Simplified model for comparison
+> permanova_simple <- adonis2(
++   immune_matrix ~ Sex + HI + He + infection +
++     Sex:HI + Sex:He + HI:He + Sex .... [TRUNCATED] 
 
-> 
-> # Calculate overall coherence by sex
-> overall_coherence <- infected_data %>%
-+   group_by(Sex) %>%
-+   summarise(
-+     n = n(),
-+     mean_coherence = calculate_network_coherence(cur_data(), immune_genes),
-+     .groups = "drop"
-+   )
-> 
-> cat("\nOverall Network Coherence:\n")
+> cat("\nSimplified PERMANOVA:\n")
 
-Overall Network Coherence:
-> print(overall_coherence)
-# A tibble: 2 × 3
-  Sex       n mean_coherence
-  <fct> <int>          <dbl>
-1 F        60          0.412
-2 M        73          0.409
-> 
-> # ==============================================================================
-> # 5. VARIANCE ANALYSIS - IMMUNE STABILITY
-> # ==============================================================================
-> 
-> cat("\n5. VARIANCE ANALYSIS - IMMUNE STABILITY\n")
+Simplified PERMANOVA:
 
-5. VARIANCE ANALYSIS - IMMUNE STABILITY
-> cat("=======================================\n")
-=======================================
-> 
-> # Calculate gene-wise variance
-> # Calculate gene-wise variance - FIXED VERSION
-> variance_analysis <- infected_data %>%
-+   group_by(Sex, hybrid_category) %>%
-+   summarise(
-+     n = n(),
-+     across(all_of(immune_genes), ~var(., na.rm = TRUE), .names = "var_{.col}"),
-+     .groups = "drop"
-+   ) %>%
-+   mutate(
-+     mean_variance = rowMeans(dplyr::select(., starts_with("var_")), na.rm = TRUE)
-+   )
-> 
-> cat("Mean Variance by Group:\n")
-Mean Variance by Group:
-> variance_summary <- variance_analysis %>%
-+   dplyr::select(Sex, hybrid_category, n, mean_variance)
-> print(variance_summary)
-# A tibble: 4 × 4
-  Sex   hybrid_category     n mean_variance
-  <fct> <chr>           <int>         <dbl>
-1 F     Hybrid             17          14.6
-2 F     Parental           43          13.8
-3 M     Hybrid             24          14.1
-4 M     Parental           49          12.5
-> 
-> # Test variance differences using Levene's test
-> library(car)
-> cat("\nTesting variance differences (Levene's test):\n")
-
-Testing variance differences (Levene's test):
-> 
-> # For each gene, test if variance differs by Sex × hybrid_category
-> variance_test_results <- data.frame()
-> 
-> for(gene in immune_genes) {
-+   if(gene %in% names(infected_data)) {
-+     levene_result <- leveneTest(
-+       as.formula(paste(gene, "~ Sex * hybrid_category")),
-+       data = infected_data
-+     )
-+ 
-+     result_row <- data.frame(
-+       Gene = gene,
-+       F_statistic = levene_result$`F value`[1],
-+       p_value = levene_result$`Pr(>F)`[1],
-+       stringsAsFactors = FALSE
-+     )
-+ 
-+     variance_test_results <- rbind(variance_test_results, result_row)
-+   }
-+ }
-> 
-> # Count genes with increased variance
-> variance_test_results <- variance_test_results %>%
-+   mutate(
-+     significant = p_value < 0.05,
-+     trend = p_value < 0.1
-+   )
-> 
-> cat(sprintf("\nGenes with differential variance (p < 0.05): %d / %d\n",
-+             sum(variance_test_results$significant),
-+             nrow(variance_test_results)))
-
-Genes with differential variance (p < 0.05): 1 / 19
-> 
-> cat(sprintf("Genes with variance trends (p < 0.1): %d / %d\n",
-+             sum(variance_test_results$trend),
-+             nrow(variance_test_results)))
-Genes with variance trends (p < 0.1): 3 / 19
-> 
-> # ==============================================================================
-> # 6. MULTIVARIATE DISPERSION ANALYSIS
-> # ==============================================================================
-> 
-> cat("\n6. MULTIVARIATE DISPERSION ANALYSIS\n")
-
-6. MULTIVARIATE DISPERSION ANALYSIS
-> cat("===================================\n")
-===================================
-> 
-> # Calculate multivariate dispersion (distance to centroid)
-> dist_matrix <- dist(scale(immune_matrix))
-> 
-> # Betadisper: test homogeneity of multivariate dispersions
-> groups <- interaction(infected_data$Sex, infected_data$hybrid_category)
-> beta_disp <- betadisper(dist_matrix, groups)
-> 
-> # Test for differences in dispersion
-> disp_test <- permutest(beta_disp, pairwise = TRUE, permutations = 999)
-> cat("Multivariate Dispersion Test:\n")
-Multivariate Dispersion Test:
-> print(disp_test)
-
-Permutation test for homogeneity of multivariate dispersions
-Permutation: free
-Number of permutations: 999
-
-Response: Distances
-           Df Sum Sq Mean Sq    F N.Perm Pr(>F)
-Groups      3    3.7    1.24 0.65    999   0.58
-Residuals 129  243.9    1.89                   
-
-Pairwise comparisons:
-(Observed p-value below diagonal, permuted p-value above diagonal)
-           F.Hybrid M.Hybrid F.Parental M.Parental
-F.Hybrid               0.656      0.634       0.21
-M.Hybrid      0.662               0.980       0.41
-F.Parental    0.640    0.970                  0.31
-M.Parental    0.217    0.442      0.315           
-> 
-> # Extract distances to centroid
-> infected_data$dist_to_centroid <- beta_disp$distances
-> 
-> # Model distance to centroid
-> dispersion_model <- lm(dist_to_centroid ~ Sex * poly(HI, 2), data = infected_data)
-> cat("\nDispersion Model (distance to centroid):\n")
-
-Dispersion Model (distance to centroid):
-> print(summary(dispersion_model))
-
-Call:
-lm(formula = dist_to_centroid ~ Sex * poly(HI, 2), data = infected_data)
-
-Residuals:
-   Min     1Q Median     3Q    Max 
--2.711 -0.750 -0.110  0.857  4.191 
-
-Coefficients:
-                  Estimate Std. Error t value            Pr(>|t|)    
-(Intercept)          4.239      0.170   24.88 <0.0000000000000002 ***
-SexM                -0.269      0.230   -1.17              0.2443    
-poly(HI, 2)1        -5.875      1.987   -2.96              0.0037 ** 
-poly(HI, 2)2         1.549      1.931    0.80              0.4240    
-SexM:poly(HI, 2)1    2.246      2.664    0.84              0.4008    
-SexM:poly(HI, 2)2   -1.957      2.652   -0.74              0.4619    
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-Residual standard error: 1.32 on 127 degrees of freedom
-Multiple R-squared:  0.108,	Adjusted R-squared:  0.0732 
-F-statistic: 3.08 on 5 and 127 DF,  p-value: 0.0116
-
-> 
-> # ==============================================================================
-> # 7. INTEGRATION: LINK TO MAIN FINDING
-> # ==============================================================================
-> 
-> cat("\n7. INTEGRATION WITH MAIN FINDING\n")
-
-7. INTEGRATION WITH MAIN FINDING
-> cat("================================\n")
-================================
-> 
-> # Show that multivariate measures predict the main phenotype better than single genes
-> cat("Comparing predictive power:\n\n")
-Comparing predictive power:
-
-> 
-> # Single best gene model (from your previous analysis - IFNy)
-> single_gene_model <- lm(predicted_weight_loss ~ Sex * poly(HI, 2) * IFNy,
-+                         data = infected_data)
-> single_r2 <- summary(single_gene_model)$r.squared
-> 
-> # PC-based model
-> pc_model <- lm(predicted_weight_loss ~ Sex * poly(HI, 2) * (PC1 + PC2 + PC3),
-+                data = infected_data)
-> pc_r2 <- summary(pc_model)$r.squared
-> 
-> # Dispersion-based model
-> disp_model <- lm(predicted_weight_loss ~ Sex * poly(HI, 2) * dist_to_centroid,
-+                  data = infected_data)
-> disp_r2 <- summary(disp_model)$r.squared
-> 
-> cat(sprintf("Single gene (IFNy) R²: %.3f\n", single_r2))
-Single gene (IFNy) R²: 0.156
-> cat(sprintf("PC-based model R²: %.3f\n", pc_r2))
-PC-based model R²: 0.406
-> cat(sprintf("Dispersion model R²: %.3f\n", disp_r2))
-Dispersion model R²: 0.144
-> cat(sprintf("\nRandom Forest R² (from Chapter 1): 0.47\n"))
-
-Random Forest R² (from Chapter 1): 0.47
-> 
-> cat("\nKEY INSIGHT: Multivariate approaches capture more variance,\n")
-
-KEY INSIGHT: Multivariate approaches capture more variance,
-> cat("supporting the Random Forest's success in predicting health outcomes.\n")
-supporting the Random Forest's success in predicting health outcomes.
-> 
-> # ==============================================================================
-> # 8. SAVE RESULTS
-> # ==============================================================================
-> # 8. SAVE RESULTS
-> # ==============================================================================
-> 
-> cat("\n8. SAVING ANALYSIS RESULTS\n")
-
-8. SAVING ANALYSIS RESULTS
-> cat("==========================\n")
-==========================
-> 
-> analysis_results <- list(
-+   pca = list(
-+     result = pca_result,
-+     var_explained = var_explained,
-+     pc_models = pc_models
-+   ),
-+   permanova = permanova_full,
-+   coherence = list(
-+     results = coherence_results,
-+     model = coherence_model,
-+     overall = overall_coherence
-+   ),
-+   variance = list(
-+     by_group = variance_analysis,
-+     tests = variance_test_results,
-+     summary = variance_summary
-+   ),
-+   dispersion = list(
-+     betadisper = beta_disp,
-+     test = disp_test,
-+     model = dispersion_model
-+   ),
-+   integration = list(
-+     single_r2 = single_r2,
-+     pc_r2 = pc_r2,
-+     disp_r2 = disp_r2
-+   )
-+ )
-> 
-> saveRDS(analysis_results, "results/multivariate_immune_analysis.rds")
-> cat("? Results saved to results/multivariate_immune_analysis.rds\n")
-? Results saved to results/multivariate_immune_analysis.rds
-> 
-> # ==============================================================================
-> # 9. SUMMARY
-> # ==============================================================================
-> 
-> cat("\n9. ANALYSIS SUMMARY\n")
-
-9. ANALYSIS SUMMARY
-> cat("==================\n")
-==================
-> 
-> cat("MULTIVARIATE EVIDENCE FOR 'HYBRID MALES SUFFER MORE':\n\n")
-MULTIVARIATE EVIDENCE FOR 'HYBRID MALES SUFFER MORE':
-
-> 
-> cat("1. IMMUNE DIVERGENCE: PC analysis shows sex-specific trajectories\n")
-1. IMMUNE DIVERGENCE: PC analysis shows sex-specific trajectories
-> cat(sprintf("   - PC1 captures %.1f%% of immune variation\n", var_explained[1]))
-   - PC1 captures 47.1% of immune variation
-> 
-> cat("\n2. NETWORK BREAKDOWN: Males show reduced coherence in hybrids\n")
-
-2. NETWORK BREAKDOWN: Males show reduced coherence in hybrids
-> cat(sprintf("   - Female coherence: %.3f\n", overall_coherence$mean_coherence[1]))
-   - Female coherence: 0.412
-> cat(sprintf("   - Male coherence: %.3f\n", overall_coherence$mean_coherence[2]))
-   - Male coherence: 0.409
-> 
-> cat("\n3. INCREASED VARIABILITY: Hybrid males are immunologically unstable\n")
-
-3. INCREASED VARIABILITY: Hybrid males are immunologically unstable
-> cat(sprintf("   - %d genes show differential variance\n", sum(variance_test_results$trend)))
-   - 3 genes show differential variance
-> 
-> cat("\n4. SYSTEMS-LEVEL DYSREGULATION: Multivariate > univariate\n")
-
-4. SYSTEMS-LEVEL DYSREGULATION: Multivariate > univariate
-> cat("   - Single genes fail after FDR correction\n")
-   - Single genes fail after FDR correction
-> cat("   - But multivariate patterns are robust\n")
-   - But multivariate patterns are robust
-> cat("   - Explains Random Forest success (47% variance)\n")
-   - Explains Random Forest success (47% variance)
-> 
-> cat("\n? ANALYSIS COMPLETE\n")
-
-? ANALYSIS COMPLETE
-> 
-> ##########################################################################
-> #########################################################################
-> cat("\n")
-
-> print_section("DEEPER MULTIVARIATE ANALYSIS - UNCOVERING SUBTLE PATTERNS")
-
- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-DEEPER MULTIVARIATE ANALYSIS - UNCOVERING SUBTLE PATTERNS 
-= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-
-> cat("Following up on initial null results with more sophisticated approaches\n\n")
-Following up on initial null results with more sophisticated approaches
-
-> 
-> cat("1. ANALYZING UNINFECTED MICE - CONSTITUTIVE IMMUNE DIFFERENCES\n")
-1. ANALYZING UNINFECTED MICE - CONSTITUTIVE IMMUNE DIFFERENCES
-> cat("==========================================================\n")
-==========================================================
-> 
-> # Analyze uninfected mice
-> uninfected_data <- immune_data %>% filter(infection_status == "Uninfected")
-> cat("? Uninfected mice: n =", nrow(uninfected_data), "\n")
-? Uninfected mice: n = 171 
-> cat("? Females:", sum(uninfected_data$Sex == "F"), "\n")
-? Females: 91 
-> cat("? Males:", sum(uninfected_data$Sex == "M"), "\n\n")
-? Males: 80 
-
-> 
-> # PCA on uninfected
-> pca_uninfected <- prcomp(uninfected_data[, immune_genes], scale. = TRUE, center = TRUE)
-> var_explained_uninf <- round(100 * pca_uninfected$sdev^2 / sum(pca_uninfected$sdev^2), 1)
-> 
-> # Add PC scores
-> uninfected_data$PC1 <- pca_uninfected$x[,1]
-> uninfected_data$PC2 <- pca_uninfected$x[,2]
-> 
-> cat("Uninfected PC1 explains:", var_explained_uninf[1], "% of variance\n")
-Uninfected PC1 explains: 41.8 % of variance
-> cat("Uninfected PC2 explains:", var_explained_uninf[2], "% of variance\n\n")
-Uninfected PC2 explains: 11.9 % of variance
-
-> 
-> # Test for constitutive differences
-> uninf_pc1_model <- lm(PC1 ~ Sex * poly(HI, 2), data = uninfected_data)
-> uninf_pc2_model <- lm(PC2 ~ Sex * poly(HI, 2), data = uninfected_data)
-> 
-> cat("Constitutive immune differences (uninfected mice):\n")
-Constitutive immune differences (uninfected mice):
-> cat("PC1 Sex × HI interaction p =",
-+     anova(uninf_pc1_model)["Sex:poly(HI, 2)", "Pr(>F)"], "\n")
-PC1 Sex × HI interaction p = 0.9466 
-> cat("PC2 Sex × HI interaction p =",
-+     anova(uninf_pc2_model)["Sex:poly(HI, 2)", "Pr(>F)"], "\n\n")
-PC2 Sex × HI interaction p = 0.07395 
-
-> 
-> # PERMANOVA on uninfected
-> immune_matrix_uninf <- as.matrix(uninfected_data[, immune_genes])
-> permanova_uninf <- adonis2(
-+   immune_matrix_uninf ~ Sex * HI * He,
-+   data = uninfected_data,
-+   permutations = 999,
-+   method = "euclidean"
-+ )
-> cat("PERMANOVA - Uninfected mice:\n")
-PERMANOVA - Uninfected mice:
-> print(permanova_uninf)
+> print(permanova_simple)
 Permutation test for adonis under reduced model
 Terms added sequentially (first to last)
 Permutation: free
 Number of permutations: 999
 
-adonis2(formula = immune_matrix_uninf ~ Sex * HI * He, data = uninfected_data, permutations = 999, method = "euclidean")
-           Df SumOfSqs    R2    F Pr(>F)  
-Sex         1      235 0.006 0.98  0.398  
-HI          1      320 0.008 1.33  0.222  
-He          1      205 0.005 0.86  0.440  
-Sex:HI      1      223 0.005 0.93  0.387  
-Sex:He      1       94 0.002 0.39  0.912  
-HI:He       1      226 0.006 0.94  0.398  
-Sex:HI:He   1      713 0.017 2.98  0.018 *
-Residual  163    39037 0.951              
-Total     170    41054 1.000              
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-> 
-> cat("\n2. ALTERNATIVE DISTANCE METRICS FOR PERMANOVA\n")
-
-2. ALTERNATIVE DISTANCE METRICS FOR PERMANOVA
-> cat("===========================================\n")
-===========================================
-> 
-> # Try different distance metrics
-> distance_metrics <- c("euclidean", "manhattan", "canberra", "bray")
-> permanova_results <- list()
-> 
-> for(metric in distance_metrics) {
-+   cat("\nTesting", metric, "distance:\n")
-+ 
-+   if(metric == "bray") {
-+     # Bray-Curtis needs non-negative data
-+     immune_matrix_positive <- infected_data[, immune_genes] -
-+       min(infected_data[, immune_genes], na.rm = TRUE) + 1
-+     dist_mat <- vegdist(immune_matrix_positive, method = metric)
-+   } else {
-+     dist_mat <- dist(scale(immune_matrix), method = metric)
-+   }
-+ 
-+   perm_result <- adonis2(
-+     dist_mat ~ Sex * HI * He,
-+     data = infected_data,
-+     permutations = 999
-+   )
-+ 
-+   permanova_results[[metric]] <- perm_result
-+ 
-+   # Extract key p-values
-+   sex_p <- perm_result["Sex", "Pr(>F)"]
-+   hi_p <- perm_result["HI", "Pr(>F)"]
-+   sex_hi_p <- perm_result["Sex:HI", "Pr(>F)"]
-+ 
-+   cat(sprintf("  Sex effect: p = %.3f\n", sex_p))
-+   cat(sprintf("  HI effect: p = %.3f\n", hi_p))
-+   cat(sprintf("  Sex:HI interaction: p = %.3f\n", sex_hi_p))
-+ }
-
-Testing euclidean distance:
-  Sex effect: p = 0.362
-  HI effect: p = 0.171
-  Sex:HI interaction: p = 0.636
-
-Testing manhattan distance:
-  Sex effect: p = 0.281
-  HI effect: p = 0.146
-  Sex:HI interaction: p = 0.554
-
-Testing canberra distance:
-  Sex effect: p = 0.266
-  HI effect: p = 0.070
-  Sex:HI interaction: p = 0.378
-
-Testing bray distance:
-  Sex effect: p = 0.325
-  HI effect: p = 0.094
-  Sex:HI interaction: p = 0.405
-> 
-> cat("\n3. NON-LINEAR RELATIONSHIPS - GAM APPROACH\n")
-
-3. NON-LINEAR RELATIONSHIPS - GAM APPROACH
-> cat("=========================================\n")
-=========================================
-> 
-> library(mgcv)
-> 
-> # Fit GAMs to detect non-linear patterns
-> cat("Testing non-linear Sex × HI effects on immune PCs:\n\n")
-Testing non-linear Sex × HI effects on immune PCs:
-
-> 
-> # For PC1
-> gam_pc1 <- gam(PC1 ~ Sex + s(HI, by = Sex, k = 5),
-+                data = infected_data, method = "REML")
-> cat("PC1 GAM results:\n")
-PC1 GAM results:
-> print(summary(gam_pc1))
-
-Family: gaussian 
-Link function: identity 
-
-Formula:
-PC1 ~ Sex + s(HI, by = Sex, k = 5)
-
-Parametric coefficients:
-            Estimate Std. Error t value Pr(>|t|)
-(Intercept)    0.232      0.387    0.60     0.55
-SexM          -0.430      0.522   -0.82     0.41
-
-Approximate significance of smooth terms:
-           edf Ref.df    F p-value
-s(HI):SexF   1      1 0.13    0.71
-s(HI):SexM   1      1 1.99    0.16
-
-R-sq.(adj) =  -0.00184   Deviance explained = 2.09%
--REML = 332.94  Scale est. = 8.9706    n = 133
-> 
-> # Test if smooth terms differ by sex
-> pc1_smooth_diff <- anova(
-+   gam(PC1 ~ s(HI, k = 5), data = infected_data),
-+   gam_pc1,
-+   test = "F"
-+ )
-> cat("\nPC1 smooth differs by sex: p =", pc1_smooth_diff$`Pr(>F)`[2], "\n")
-
-PC1 smooth differs by sex: p = 0.5707 
-> 
-> # For predicted weight loss
-> gam_weight <- gam(predicted_weight_loss ~ Sex + s(HI, by = Sex, k = 5),
-+                   data = infected_data, method = "REML")
-> cat("\nPredicted weight loss GAM results:\n")
-
-Predicted weight loss GAM results:
-> print(summary(gam_weight))
-
-Family: gaussian 
-Link function: identity 
-
-Formula:
-predicted_weight_loss ~ Sex + s(HI, by = Sex, k = 5)
-
-Parametric coefficients:
-            Estimate Std. Error t value            Pr(>|t|)    
-(Intercept)   10.715      0.324   33.08 <0.0000000000000002 ***
-SexM          -0.128      0.437   -0.29                0.77    
+adonis2(formula = immune_matrix ~ Sex + HI + He + infection + Sex:HI + Sex:He + HI:He + Sex:infection + HI:infection, data = immune_data, permutations = 999, method = "euclidean")
+               Df SumOfSqs    R2    F Pr(>F)  
+Sex             1      332 0.004 1.34  0.207  
+HI              1      300 0.004 1.21  0.242  
+He              1      242 0.003 0.98  0.390  
+infection       1      672 0.009 2.71  0.041 *
+Sex:HI          1      248 0.003 1.00  0.365  
+Sex:He          1      128 0.002 0.52  0.761  
+HI:He           1      167 0.002 0.67  0.620  
+Sex:infection   1      125 0.002 0.50  0.798  
+HI:infection    1      436 0.006 1.76  0.122  
+Residual      294    72866 0.965              
+Total         303    75515 1.000              
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-Approximate significance of smooth terms:
-            edf Ref.df    F p-value  
-s(HI):SexF 1.22    1.4 2.63   0.066 .
-s(HI):SexM 1.00    1.0 0.97   0.326  
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> pca <- prcomp(immune_matrix, scale. = TRUE)
 
-R-sq.(adj) =  0.0197   Deviance explained = 4.36%
--REML = 310.16  Scale est. = 6.2902    n = 133
-> 
-> # Visualize non-linear relationships
-> library(gratia)
-> smooth_estimates <- smooth_estimates(gam_weight) %>%
-+   add_confint()
-> 
-> cat("\n4. GENE MODULE ANALYSIS - WGCNA APPROACH\n")
+> plot_df <- data.frame(pca$x[, 1:2], infection = immune_data$infection, Sex = immune_data$Sex)
 
-4. GENE MODULE ANALYSIS - WGCNA APPROACH
-> cat("=======================================\n")
-=======================================
-> 
-> library(WGCNA)
-> options(stringsAsFactors = FALSE)
-> 
-> # Prepare data for WGCNA
-> datExpr <- as.data.frame(t(immune_matrix))
-> colnames(datExpr) <- infected_data$Mouse_ID
-> 
-> # Check for genes with too many missing values
-> gsg <- goodSamplesGenes(datExpr, verbose = 0)
-> if (!gsg$allOK) {
-+   datExpr <- datExpr[gsg$goodGenes, gsg$goodSamples]
-+ }
-> 
-> # Choose soft threshold
-> powers <- c(1:20)
-> sft <- pickSoftThreshold(datExpr, powerVector = powers, verbose = 0)
-   Power SFT.R.sq  slope truncated.R.sq mean.k. median.k. max.k.
-1      1   0.0192 -0.563         0.3270 36.4000   36.5000 48.700
-2      2   0.0036 -0.100         0.6260 14.8000   14.8000 23.500
-3      3   0.1410 -0.505         0.6970  7.1700    6.9100 13.500
-4      4   0.2810 -0.639         0.8100  3.9100    3.6700  8.590
-5      5   0.3530 -0.751         0.7590  2.3100    2.1400  5.780
-6      6   0.4590 -0.960         0.8090  1.4500    1.2800  4.050
-7      7   0.6990 -1.120         0.9350  0.9520    0.8100  2.940
-8      8   0.7450 -1.220         0.8900  0.6490    0.5530  2.180
-9      9   0.7160 -1.190         0.8130  0.4560    0.3840  1.660
-10    10   0.7440 -1.280         0.8060  0.3290    0.2800  1.290
-11    11   0.7620 -1.250         0.8470  0.2420    0.2040  1.010
-12    12   0.7320 -1.280         0.7730  0.1820    0.1390  0.804
-13    13   0.8010 -1.240         0.8680  0.1380    0.0992  0.643
-14    14   0.2080 -2.650         0.1240  0.1070    0.0745  0.518
-15    15   0.2060 -2.530         0.1220  0.0836    0.0548  0.419
-16    16   0.2060 -2.560         0.1150  0.0661    0.0409  0.341
-17    17   0.2010 -2.490         0.0966  0.0527    0.0300  0.278
-18    18   0.9190 -1.100         0.9300  0.0424    0.0224  0.227
-19    19   0.1980 -2.470         0.0883  0.0344    0.0163  0.186
-20    20   0.7940 -1.080         0.7460  0.0281    0.0121  0.155
-> softPower <- sft$powerEstimate
-> 
-> cat("Soft threshold chosen:", softPower, "\n\n")
-Soft threshold chosen: 18 
+> ggplot(plot_df, aes(PC1, PC2, color = infection, shape = Sex)) +
++   geom_point(alpha = 0.6) +
++   theme_minimal()
 
-> 
-> # Build network and identify modules
-> net <- blockwiseModules(
-+   datExpr,
-+   power = softPower,
-+   TOMType = "unsigned",
-+   minModuleSize = 3,
-+   reassignThreshold = 0,
-+   mergeCutHeight = 0.25,
-+   numericLabels = TRUE,
-+   pamRespectsDendro = FALSE,
-+   saveTOMs = FALSE,
-+   verbose = 0
-+ )
-# Extract module eigengenes
-> MEs <- net$MEs
-> nModules <- ncol(MEs)
-> cat("Number of modules identified:", nModules, "\n\n")
-Number of modules identified: 8 
+> # ==============================================================================
+> # 7. NETWORK COHERENCE WITH INFECTION AS FACTOR
+> # ============= .... [TRUNCATED] 
 
-> 
-> # The error is because WGCNA transposed the data
-> # MEs has rows = genes, cols = samples, but infected_data has rows = samples
-> 
-> # Test each module for Sex × HI effects
-> module_results <- data.frame()
-> 
-> for(i in 0:(nModules-1)) {
-+   module_name <- paste0("ME", i)
-+   if(module_name %in% colnames(MEs)) {
-+     # Extract module eigengene for the correct samples
-+     module_eigengene <- MEs[, module_name]
-+ 
-+     # Create temporary dataframe for testing
-+     temp_data <- data.frame(
-+       ME = module_eigengene,
-+       Sex = infected_data$Sex,
-+       HI = infected_data$HI
-+     )
-+ 
-+     # Test module
-+     mod_lm <- lm(ME ~ Sex * poly(HI, 2), data = temp_data)
-+ 
-+     # Extract p-values
-+     anova_result <- anova(mod_lm)
-+     interaction_p <- anova_result["Sex:poly(HI, 2)", "Pr(>F)"]
-+ 
-+     # Count genes in module
-+     n_genes <- sum(net$colors == i)
-+ 
-+     # Get module genes
-+     module_genes <- immune_genes[net$colors == i]
-+ 
-+     module_results <- rbind(module_results, data.frame(
-+       Module = module_name,
-+       n_genes = n_genes,
-+       genes = paste(module_genes, collapse = ", "),
-+       interaction_p = interaction_p,
-+       significant = interaction_p < 0.05,
-+       stringsAsFactors = FALSE
-+     ))
-+   }
-+ }
-> 
-> cat("Module-specific Sex × HI interactions:\n")
-Module-specific Sex × HI interactions:
-> print(module_results[, c("Module", "n_genes", "interaction_p", "significant")])
-  Module n_genes interaction_p significant
-1    ME0     100        0.7960       FALSE
-2    ME1       9        0.6156       FALSE
-3    ME2       6        0.6764       FALSE
-4    ME3       5        0.6313       FALSE
-5    ME4       4        0.6975       FALSE
-6    ME5       3        0.7191       FALSE
-7    ME6       3        0.2459       FALSE
-8    ME7       3        0.4068       FALSE
-> 
-> # Show which genes are in significant modules
-> if(any(module_results$significant)) {
-+   sig_modules <- module_results[module_results$significant, ]
-+   cat("\nSignificant modules contain these genes:\n")
-+   for(i in 1:nrow(sig_modules)) {
-+     cat(sprintf("%s: %s\n", sig_modules$Module[i], sig_modules$genes[i]))
-+   }
-+ }
-> 
-> cat("Module-specific Sex × HI interactions:\n")
-Module-specific Sex × HI interactions:
-> print(module_results)
-  Module n_genes
-1    ME0     100
-2    ME1       9
-3    ME2       6
-4    ME3       5
-5    ME4       4
-6    ME5       3
-7    ME6       3
-8    ME7       3
-                                                                                                                                                                                                                                                                                                                                                                                                                                               genes
-1 IFNy, CXCR3, IL.13, CASP1, IRGM1, MPO, MUC2, MUC5AC, MYD88, NCR1, PRF1, RETNLB, SOCS1, TNF, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA
-2                                                                                                                                                                                                                                                                                                                                                                                                                 NA, NA, NA, NA, NA, NA, NA, NA, NA
-3                                                                                                                                                                                                                                                                                                                                                                                                                  IL.6, CXCL9, IDO1, TICAM1, NA, NA
-4                                                                                                                                                                                                                                                                                                                                                                                                                                 NA, NA, NA, NA, NA
-5                                                                                                                                                                                                                                                                                                                                                                                                                                     NA, NA, NA, NA
-6                                                                                                                                                                                                                                                                                                                                                                                                                                         NA, NA, NA
-7                                                                                                                                                                                                                                                                                                                                                                                                                                      IL1RN, NA, NA
-8                                                                                                                                                                                                                                                                                                                                                                                                                                         NA, NA, NA
-  interaction_p significant
-1        0.7960       FALSE
-2        0.6156       FALSE
-3        0.6764       FALSE
-4        0.6313       FALSE
-5        0.6975       FALSE
-6        0.7191       FALSE
-7        0.2459       FALSE
-8        0.4068       FALSE
-> 
-> cat("\n5. INFECTION-STRATIFIED ANALYSIS\n")
+7. NETWORK COHERENCE ANALYSIS
 
-5. INFECTION-STRATIFIED ANALYSIS
-> cat("================================\n")
-================================
-> 
-> # Compare immune responses in males vs females at different HI levels
-> # Focus on high vs low HI within each sex
-> 
-> infected_data <- infected_data %>%
-+   mutate(HI_category = case_when(
-+     HI < 0.3 ~ "Low",
-+     HI > 0.7 ~ "High",
-+     TRUE ~ "Mid"
-+   ))
-> 
-> # For each sex, compare high vs low HI immune profiles
-> cat("Multivariate immune differences between High and Low HI:\n\n")
-Multivariate immune differences between High and Low HI:
-
-> 
-> for(sex in c("F", "M")) {
-+   sex_data <- infected_data %>%
-+     filter(Sex == sex, HI_category %in% c("Low", "High"))
-+ 
-+   if(nrow(sex_data) > 10) {
-+     sex_matrix <- as.matrix(sex_data[, immune_genes])
-+ 
-+     perm_sex <- adonis2(
-+       sex_matrix ~ HI_category,
-+       data = sex_data,
-+       permutations = 999,
-+       method = "euclidean"
-+     )
-+ 
-+     cat(sex, "mice - High vs Low HI immune profiles:\n")
-+     cat("  R² =", perm_sex["HI_category", "R2"], "\n")
-+     cat("  p =", perm_sex["HI_category", "Pr(>F)"], "\n\n")
-+   }
-+ }
-F mice - High vs Low HI immune profiles:
-  R² = 0.008365 
-  p = 0.855 
-
-M mice - High vs Low HI immune profiles:
-  R² = 0.02793 
-  p = 0.098 
-
-> 
-> cat("\n6. INTEGRATE FINDINGS - COMPOSITE DYSREGULATION SCORE\n")
-
-6. INTEGRATE FINDINGS - COMPOSITE DYSREGULATION SCORE
-> cat("====================================================\n")
-====================================================
-> cat("\n6. INTEGRATE FINDINGS - COMPOSITE DYSREGULATION SCORE\n")
-
-6. INTEGRATE FINDINGS - COMPOSITE DYSREGULATION SCORE
-> cat("====================================================\n")
-====================================================
-> 
-> # Create composite immune dysregulation score
-> infected_data <- infected_data %>%
-+   mutate(
-+     # Distance from sex-specific centroid
-+     pc_distance = sqrt(PC1^2 + PC2^2),
-+     # Network disruption (from distance to centroid)
-+     network_disruption = dist_to_centroid,
-+     # Composite score
-+     dysregulation_score = scale(pc_distance) + scale(network_disruption)
-+   )
-> 
-> # Model composite score
-> dysreg_model <- lm(dysregulation_score ~ Sex * poly(HI, 2), data = infected_data)
-> cat("Composite Dysregulation Score Model:\n")
-Composite Dysregulation Score Model:
-> print(summary(dysreg_model))
-
-Call:
-lm(formula = dysregulation_score ~ Sex * poly(HI, 2), data = infected_data)
-
-Residuals:
-   Min     1Q Median     3Q    Max 
--3.724 -1.326 -0.149  0.941  5.440 
-
-Coefficients:
-                  Estimate Std. Error t value Pr(>|t|)    
-(Intercept)          0.154      0.237    0.65  0.51777    
-SexM                -0.277      0.320   -0.86  0.38880    
-poly(HI, 2)1        -9.736      2.764   -3.52  0.00059 ***
-poly(HI, 2)2         1.903      2.686    0.71  0.47995    
-SexM:poly(HI, 2)1    4.335      3.706    1.17  0.24423    
-SexM:poly(HI, 2)2   -2.944      3.689   -0.80  0.42636    
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-Residual standard error: 1.83 on 127 degrees of freedom
-Multiple R-squared:  0.131,	Adjusted R-squared:  0.0971 
-F-statistic: 3.84 on 5 and 127 DF,  p-value: 0.00284
-
-> 
-> # Does dysregulation predict weight loss?
-> dysreg_outcome <- lm(predicted_weight_loss ~ Sex * poly(HI, 2) * dysregulation_score,
-+                      data = infected_data)
-> cat("\nDysregulation predicting weight loss:\n")
-
-Dysregulation predicting weight loss:
-> cat("Model R² =", summary(dysreg_outcome)$r.squared, "\n")
-Model R² = 0.1575 
-> cat("Dysregulation main effect p =",
-+     summary(dysreg_outcome)$coefficients["dysregulation_score", "Pr(>|t|)"], "\n")
-Dysregulation main effect p = 0.6798 
-> 
-> cat("\n7. SUMMARIZING DEEPER INSIGHTS\n")
-
-7. SUMMARIZING DEEPER INSIGHTS
 > cat("=============================\n")
 =============================
-> 
-> # Count significant findings
-> n_significant <- sum(
-+   # Add up significant results from different analyses
-+   permanova_uninf["Sex:HI", "Pr(>F)"] < 0.05,
-+   any(unlist(lapply(permanova_results, function(x) x["Sex:HI", "Pr(>F)"] < 0.05))),
-+   pc1_smooth_diff$`Pr(>F)`[2] < 0.05,
-+   any(module_results$significant, na.rm = TRUE),
-+   anova(dysreg_model)["Sex:poly(HI, 2)", "Pr(>F)"] < 0.05
-+ )
-> 
-> cat("\nTotal significant Sex × HI effects found:", n_significant, "\n")
 
-Total significant Sex × HI effects found: 0 
-> cat("Most promising approaches:\n")
-Most promising approaches:
-> if(any(module_results$significant, na.rm = TRUE)) {
-+   cat("- Gene module analysis revealed sex-specific patterns\n")
-+ }
-> if(pc1_smooth_diff$`Pr(>F)`[2] < 0.05) {
-+   cat("- Non-linear GAM approach detected sex differences\n")
-+ }
-> if(summary(dysreg_outcome)$r.squared > 0.3) {
-+   cat("- Composite dysregulation score predicts outcomes\n")
-+ }
-> 
-> # Save extended results
-> extended_results <- list(
-+   uninfected = list(
-+     pca = pca_uninfected,
-+     models = list(pc1 = uninf_pc1_model, pc2 = uninf_pc2_model),
-+     permanova = permanova_uninf
-+   ),
-+   distance_metrics = permanova_results,
-+   nonlinear = list(
-+     gam_pc1 = gam_pc1,
-+     gam_weight = gam_weight,
-+     smooth_diff = pc1_smooth_diff
-+   ),
-+   modules = list(
-+     network = net,
-+     results = module_results,
-+     eigengenes = MEs
-+   ),
-+   dysregulation = list(
-+     model = dysreg_model,
-+     outcome_model = dysreg_outcome
-+   )
-+ )
-> 
-> saveRDS(extended_results, "results/extended_multivariate_analysis.rds")
-> cat("\n? Extended analysis complete and saved\n")
+> # Function to calculate network coherence
+> calculate_coherence <- function(data, genes) {
++   cor_matrix <- cor(data[, genes], use = "pairwise.comp ..." ... [TRUNCATED] 
 
-? Extended analysis complete and saved
-> 
-> cat("\n### EXPLORING THE SIGNIFICANT 3-WAY INTERACTION IN UNINFECTED MICE ###\n")
+> # Calculate coherence by groups
+> coherence_data <- immune_data %>%
++   mutate(HI_bin = cut(HI, breaks = seq(0, 1, by = 0.2), include.lowest = TRUE) .... [TRUNCATED] 
 
-### EXPLORING THE SIGNIFICANT 3-WAY INTERACTION IN UNINFECTED MICE ###
-> cat("=====================================================================\n")
-=====================================================================
-> 
-> # Create visualization of the 3-way interaction
-> 
-> 
-> # Calculate predicted values for the 3-way interaction
-> uninfected_data$predicted_immune <- predict(
-+   lm(PC1 ~ Sex * HI * He, data = uninfected_data)
-+ )
-> 
-> # Plot the interaction
-> p_3way <- ggplot(uninfected_data, aes(x = HI, y = PC1)) +
-+   geom_point(aes(color = Sex), alpha = 0.6, size = 3) +
-+   geom_smooth(aes(color = Sex, fill = Sex), method = "loess", alpha = 0.2) +
-+   scale_color_manual(values = c("F" = "#E69F00", "M" = "#56B4E9")) +
-+   scale_fill_manual(values = c("F" = "#E69F00", "M" = "#56B4E9")) +
-+   labs(
-+     title = "Constitutive Immune Differences in Uninfected Mice",
-+     subtitle = "Significant Sex × HI × He interaction (p = 0.031)",
-+     x = "Hybrid Index",
-+     y = "PC1 (41.8% variance)"
-+   ) +
-+   theme_minimal(base_size = 14) +
-+   theme(
-+     plot.title = element_text(face = "bold"),
-+     legend.position = "bottom"
-+   )
-> 
-> ggsave("results/figures/constitutive_3way_interaction.png",
-+        p_3way, width = 8, height = 6, dpi = 300)
-`geom_smooth()` using formula = 'y ~ x'
-> 
-> # Decompose the interaction by looking at extreme HI values
-> uninf_extreme <- uninfected_data %>%
-+   mutate(HI_group = case_when(
-+     HI < 0.2 ~ "Parental_low",
-+     HI > 0.8 ~ "Parental_high",
-+     HI > 0.3 & HI < 0.7 ~ "Hybrid",
-+     TRUE ~ "Other"
-+   )) %>%
-+   filter(HI_group != "Other")
-> 
-> # Test sex differences within each group
-> cat("\nSex differences in immune profiles by hybrid status:\n")
+> # Model coherence with infection as factor
+> coherence_model <- lm(coherence ~ Sex * poly(mean_HI, 2) * infection,
++                       data = co .... [TRUNCATED] 
 
-Sex differences in immune profiles by hybrid status:
-> for(group in unique(uninf_extreme$HI_group)) {
-+   group_data <- uninf_extreme %>% filter(HI_group == group)
-+   if(nrow(group_data) > 10) {
-+     t_test <- t.test(PC1 ~ Sex, data = group_data)
-+     cat(sprintf("%s: t = %.2f, p = %.4f\n",
-+                 group, t_test$statistic, t_test$p.value))
-+   }
-+ }
-> 
-> cat("\n### EXPLORING THE SIGNIFICANT 3-WAY INTERACTION IN UNINFECTED MICE ###\n")
+> cat("Network Coherence Model:\n")
+Network Coherence Model:
 
-### EXPLORING THE SIGNIFICANT 3-WAY INTERACTION IN UNINFECTED MICE ###
-> cat("=====================================================================\n")
-=====================================================================
-> 
-> # Create visualization of the 3-way interaction
-> library(ggplot2)
-> 
-> # Calculate predicted values for the 3-way interaction
-> uninfected_data$predicted_immune <- predict(
-+   lm(PC1 ~ Sex * HI * He, data = uninfected_data)
-+ )
-> 
-> # Plot the interaction
-> p_3way <- ggplot(uninfected_data, aes(x = HI, y = PC1)) +
-+   geom_point(aes(color = Sex), alpha = 0.6, size = 3) +
-+   geom_smooth(aes(color = Sex, fill = Sex), method = "loess", alpha = 0.2) +
-+   scale_color_manual(values = c("F" = "#E69F00", "M" = "#56B4E9")) +
-+   scale_fill_manual(values = c("F" = "#E69F00", "M" = "#56B4E9")) +
-+   labs(
-+     title = "Constitutive Immune Differences in Uninfected Mice",
-+     subtitle = "Significant Sex × HI × He interaction (p = 0.031)",
-+     x = "Hybrid Index",
-+     y = "PC1 (41.8% variance)"
-+   ) +
-+   theme_minimal(base_size = 14) +
-+   theme(
-+     plot.title = element_text(face = "bold"),
-+     legend.position = "bottom"
-+   )
-> 
-> ggsave("results/figures/constitutive_3way_interaction.png",
-+        p_3way, width = 8, height = 6, dpi = 300)
-`geom_smooth()` using formula = 'y ~ x'
-> 
-> # Decompose the interaction by looking at extreme HI values
-> uninf_extreme <- uninfected_data %>%
-+   mutate(HI_group = case_when(
-+     HI < 0.2 ~ "Parental_low",
-+     HI > 0.8 ~ "Parental_high",
-+     HI > 0.3 & HI < 0.7 ~ "Hybrid",
-+     TRUE ~ "Other"
-+   )) %>%
-+   filter(HI_group != "Other")
-> 
-> # Test sex differences within each group
-> cat("\nSex differences in immune profiles by hybrid status:\n")
+> print(summary(coherence_model))
 
-Sex differences in immune profiles by hybrid status:
-> for(group in unique(uninf_extreme$HI_group)) {
-+   group_data <- uninf_extreme %>% filter(HI_group == group)
-+   if(nrow(group_data) > 10) {
-+     t_test <- t.test(PC1 ~ Sex, data = group_data)
-+     cat(sprintf("%s: t = %.2f, p = %.4f\n",
-+                 group, t_test$statistic, t_test$p.value))
-+   }
-+ }
-> 
-> cat("\n\n=== SYNTHESIS OF DEEPER ANALYSIS ===\n")
+Call:
+lm(formula = coherence ~ Sex * poly(mean_HI, 2) * infection, 
+    data = coherence_data)
+
+Residuals:
+                     1                      2                      3                      4                      5                      6                      7 
+-0.0123656225215325911  0.0240255041942247123 -0.0295732027373898261  0.0179133210646977639 -0.0000000000000000282  0.0000000000000000533 -0.0000000000000000629 
+                     8                      9                     10                     11                     12                     13                     14 
+ 0.0336620027600244426 -0.0654564180162643255  0.0646276076586980996 -0.0328331924024582583 -0.0570891745971994560  0.1054619641109661443 -0.1233124719260311891 
+                    15 
+ 0.0749396824122645494 
+
+Coefficients:
+                                         Estimate Std. Error t value Pr(>|t|)   
+(Intercept)                                0.4298     0.0634    6.78   0.0066 **
+SexM                                      -0.0709     0.0898   -0.79   0.4876   
+poly(mean_HI, 2)1                         -0.1079     0.2479   -0.44   0.6927   
+poly(mean_HI, 2)2                         -0.3091     0.2463   -1.25   0.2983   
+infectionInfected                          0.0415     0.1141    0.36   0.7404   
+SexM:poly(mean_HI, 2)1                     0.2476     0.3668    0.68   0.5480   
+SexM:poly(mean_HI, 2)2                     0.0971     0.3380    0.29   0.7925   
+SexM:infectionInfected                     0.0800     0.1454    0.55   0.6207   
+poly(mean_HI, 2)1:infectionInfected       -0.2025     0.4265   -0.47   0.6674   
+poly(mean_HI, 2)2:infectionInfected        0.1369     0.5308    0.26   0.8132   
+SexM:poly(mean_HI, 2)1:infectionInfected  -0.3115     0.5652   -0.55   0.6199   
+SexM:poly(mean_HI, 2)2:infectionInfected  -0.3660     0.6385   -0.57   0.6066   
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.126 on 3 degrees of freedom
+Multiple R-squared:  0.786,	Adjusted R-squared:  0.000582 
+F-statistic:    1 on 11 and 3 DF,  p-value: 0.571
 
 
-=== SYNTHESIS OF DEEPER ANALYSIS ===
-> cat("=====================================\n\n")
-=====================================
+> # Visualize coherence
+> plot_coherence <- ggplot(coherence_data,
++                          aes(x = mean_HI, y = coherence, color = Sex)) +
++   geom .... [TRUNCATED] 
 
-> 
-> cat("1. CONSTITUTIVE IMMUNITY (Uninfected mice):\n")
-1. CONSTITUTIVE IMMUNITY (Uninfected mice):
-> cat("   - Significant Sex × HI × He interaction (p = 0.031)\n")
-   - Significant Sex × HI × He interaction (p = 0.031)
-> cat("   - PC2 shows marginal Sex × HI trend (p = 0.074)\n")
-   - PC2 shows marginal Sex × HI trend (p = 0.074)
-> cat("   - Suggests baseline immune differences in hybrids\n\n")
-   - Suggests baseline immune differences in hybrids
+> plot_coherence
 
-> 
-> cat("2. INFECTION RESPONSE (Infected mice):\n")
-2. INFECTION RESPONSE (Infected mice):
-> cat("   - No simple Sex × HI interactions detected\n")
-   - No simple Sex × HI interactions detected
-> cat("   - But GAM reveals female-specific trend (p = 0.066)\n")
-   - But GAM reveals female-specific trend (p = 0.066)
-> cat("   - Males show stronger High vs Low HI differences (p = 0.107)\n\n")
-   - Males show stronger High vs Low HI differences (p = 0.107)
+> coherence_model <- lm(coherence ~ poly(mean_HI, 2), data = coherence_data)
 
-> 
-> cat("3. SYSTEMS-LEVEL PATTERNS:\n")
-3. SYSTEMS-LEVEL PATTERNS:
-> cat("   - 8 gene modules identified by WGCNA\n")
-   - 8 gene modules identified by WGCNA
-> cat("   - Dysregulation score shows strong HI effect (p < 0.001)\n")
-   - Dysregulation score shows strong HI effect (p < 0.001)
-> cat("   - But dysregulation doesn't predict weight loss well\n\n")
-   - But dysregulation doesn't predict weight loss well
+> summary(coherence_model)
 
-> 
-> cat("4. INTERPRETATION:\n")
-4. INTERPRETATION:
-> cat("   - Hybridization affects immunity even without infection\n")
-   - Hybridization affects immunity even without infection
-> cat("   - Sex-specific effects are subtle and non-linear\n")
-   - Sex-specific effects are subtle and non-linear
-> cat("   - Traditional univariate methods miss these patterns\n")
-   - Traditional univariate methods miss these patterns
-> cat("   - Supports the use of machine learning (Random Forest)\n")
-   - Supports the use of machine learning (Random Forest)
-> 
-> 
-> # Create multi-panel figure summarizing findings
-> library(patchwork)
-> 
-> # Panel A: 3-way interaction in uninfected
-> p_uninf <- p_3way + labs(tag = "A")
-> 
-> # Panel B: GAM smooth for females
-> library(mgcv)
-> # Extract smooth for females
-> female_pred <- data.frame(
-+   HI = seq(0, 1, 0.01),
-+   Sex = factor("F", levels = c("F", "M"))
-+ )
-> female_pred$weight_loss <- predict(gam_weight, female_pred)
-> 
-> p_gam <- ggplot(female_pred, aes(x = HI, y = weight_loss)) +
-+   geom_line(color = "#E69F00", size = 2) +
-+   geom_ribbon(aes(ymin = weight_loss - 0.5, ymax = weight_loss + 0.5),
-+               alpha = 0.2, fill = "#E69F00") +
-+   labs(
-+     tag = "B",
-+     title = "Female-specific Weight Loss Pattern",
-+     subtitle = "GAM smooth p = 0.066",
-+     x = "Hybrid Index",
-+     y = "Predicted Weight Loss (%)"
-+   ) +
-+   theme_minimal(base_size = 14)
-> 
-> # Panel C: Dysregulation effect
-> p_dysreg <- ggplot(infected_data, aes(x = HI, y = dysregulation_score)) +
-+   geom_point(aes(color = Sex), alpha = 0.6) +
-+   geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = TRUE) +
-+   scale_color_manual(values = c("F" = "#E69F00", "M" = "#56B4E9")) +
-+   labs(
-+     tag = "C",
-+     title = "Immune Dysregulation Score",
-+     subtitle = "HI effect p < 0.001",
-+     x = "Hybrid Index",
-+     y = "Dysregulation Score"
-+   ) +
-+   theme_minimal(base_size = 14)
-> 
-> # Combine panels
-> p_combined <- (p_uninf | p_gam) / p_dysreg +
-+   plot_annotation(
-+     title = "Subtle Sex-Specific Immune Patterns in Hybrid Mice",
-+     subtitle = "Multivariate approaches reveal complex hybridization effects"
-+   )
-> 
-> ggsave("results/figures/multivariate_synthesis.png",
-+        p_combined, width = 14, height = 10, dpi = 300)
-`geom_smooth()` using formula = 'y ~ x'
-# Check if running from master script
-> if (!exists("field_mice") && !exists("MASTER_SCRIPT_RUNNING")) {
-+   stop("Please run 00_master_script.R first to load data and packages")
-+ }
-> cat("=== IMMUNE MECHANISMS UNDERLYING SEX-SPECIFIC HYBRID EFFECTS ===\n")
-=== IMMUNE MECHANISMS UNDERLYING SEX-SPECIFIC HYBRID EFFECTS ===
-> cat("Using parasiteLoad framework with heterozygosity analysis\n\n")
-Using parasiteLoad framework with heterozygosity analysis
+Call:
+lm(formula = coherence ~ poly(mean_HI, 2), data = coherence_data)
 
-> cat("1. PREPARING IMMUNE DATA FOR HYBRID ANALYSIS\n")
-1. PREPARING IMMUNE DATA FOR HYBRID ANALYSIS
-> cat("============================================\n")
-============================================
-> # Filter to genes that actually exist in the dataset
-> available_genes <- immune_genes[immune_genes %in% names(field_mice)]
-> cat("Available immune genes:", length(available_genes), "\n")
-Available immune genes: 19 
-> if (length(available_genes) > 0) {
-+   cat("Found genes:", paste(available_genes, collapse = ", "), "\n")
-+ } else {
-+   stop("ERROR: No immune genes found in dataset! Please check column names.")
-+ }
-Found genes: IFNy, CXCR3, IL.6, IL.13, IL1RN, CASP1, CXCL9, IDO1, IRGM1, MPO, MUC2, MUC5AC, MYD88, NCR1, PRF1, RETNLB, SOCS1, TICAM1, TNF 
-> # Create immune analysis dataset with only available genes
-> immune_data <- field_mice %>%
-+   dplyr::select(Mouse_ID, HI, Sex, infection_status, predicted_weight_loss,
-+                 all_of(available_genes)) %>%
-+   filter(
-+     !is.na(HI),
-+     !is.na(Sex),
-+     !is.na(predicted_weight_loss),
-+     !is.na(infection_status)
-+   ) %>%
-+   mutate(
-+     # Ensure proper factor levels
-+     Sex = factor(Sex, levels = c("F", "M")),
-+ 
-+     # Create infection status variables
-+     infected = as.logical(infection_status),
-+     infection_group = ifelse(infected, "Infected", "Uninfected"),
-+     infection_status = factor(infection_status,
-+                               levels = c(FALSE, TRUE),
-+                               labels = c("Uninfected", "Infected")),
-+ 
-+     # Calculate heterozygosity (He) - key for hybrid effects
-+     He = 2 * HI * (1 - HI),
-+ 
-+     # Create hybrid categories for visualization
-+     hybrid_category = case_when(
-+       HI < 0.2 ~ "domesticus-like",
-+       HI > 0.8 ~ "musculus-like",
-+       TRUE ~ "hybrid"
-+     ),
-+     hybrid_category = factor(hybrid_category,
-+                              levels = c("domesticus-like", "hybrid", "musculus-like")),
-+ 
-+     # Response variable
-+     response = as.numeric(predicted_weight_loss)
-+   )
-> cat("Sample size:", nrow(immune_data), "\n")
-Sample size: 304 
-> cat("- Females:", sum(immune_data$Sex == "F"), "\n")
-- Females: 151 
-> cat("- Males:", sum(immune_data$Sex == "M"), "\n")
-- Males: 153 
-> cat("- Infected:", sum(immune_data$infected), "\n")
-- Infected: 133 
-> cat("- Uninfected:", sum(!immune_data$infected), "\n\n")
-- Uninfected: 171 
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.19605 -0.03391  0.00477  0.02377  0.25462 
 
-> # Handle missing values in immune genes systematically
-> missing_summary <- immune_data %>%
-+   dplyr::select(all_of(available_genes)) %>%
-+   summarise_all(~sum(is.na(.))) %>%
-+   pivot_longer(everything(), names_to = "gene", values_to = "n_missing") %>%
-+   filter(n_missing > 0)
-> if(nrow(missing_summary) > 0) {
-+   cat("? Missing values detected in", nrow(missing_summary), "genes\n")
-+   # Impute using median by group (Sex × Infection Status)
-+   immune_data <- immune_data %>%
-+     group_by(Sex, infection_status) %>%
-+     mutate(across(all_of(available_genes), ~ifelse(is.na(.), median(., na.rm = TRUE), .))) %>%
-+     ungroup()
-+   cat("? Missing values imputed using group-specific medians\n")
-+ } else {
-+   cat("? No missing values detected\n")
-+ }
-? No missing values detected
-> cat("2. CREATING IMMUNE PATHWAY SCORES\n")
-2. CREATING IMMUNE PATHWAY SCORES
-> cat("=================================\n")
-=================================
-> # Define pathways based on known biology using available genes
-> create_pathway_scores <- function(data, genes) {
-+   pathways <- list()
-+ 
-+   # Th1 response (anti-intracellular pathogens)
-+   th1_genes <- intersect(c("IFNy", "TNF", "CXCL9", "IDO1"), genes)
-+   if (length(th1_genes) >= 1) {
-+     pathways$Th1_response <- if(length(th1_genes) == 1) {
-+       data[[th1_genes]]
-+     } else {
-+       rowMeans(data[, th1_genes], na.rm = TRUE)
-+     }
-+   }
-+ 
-+   # Th2/mucus response (anti-Eimeria)
-+   th2_genes <- intersect(c("IL.13", "IL.10", "MUC2", "MUC5AC"), genes)
-+   if (length(th2_genes) >= 1) {
-+     pathways$Th2_mucus <- if(length(th2_genes) == 1) {
-+       data[[th2_genes]]
-+     } else {
-+       rowMeans(data[, th2_genes], na.rm = TRUE)
-+     }
-+   }
-+ 
-+   # Inflammation/tissue damage
-+   inflam_genes <- intersect(c("IL.6", "TNF", "IL.17", "CASP1", "MPO"), genes)
-+   if (length(inflam_genes) >= 1) {
-+     pathways$Inflammation <- if(length(inflam_genes) == 1) {
-+       data[[inflam_genes]]
-+     } else {
-+       rowMeans(data[, inflam_genes], na.rm = TRUE)
-+     }
-+   }
-+ 
-+   # Regulatory/tolerance
-+   reg_genes <- intersect(c("IL1RN", "IL.10", "SOCS1", "IDO1"), genes)
-+   if (length(reg_genes) >= 1) {
-+     pathways$Regulation <- if(length(reg_genes) == 1) {
-+       data[[reg_genes]]
-+     } else {
-+       rowMeans(data[, reg_genes], na.rm = TRUE)
-+     }
-+   }
-+ 
-+   # Cytotoxicity
-+   cyto_genes <- intersect(c("PRF1", "NCR1"), genes)
-+   if (length(cyto_genes) >= 1) {
-+     pathways$Cytotoxicity <- if(length(cyto_genes) == 1) {
-+       data[[cyto_genes]]
-+     } else {
-+       rowMeans(data[, cyto_genes], na.rm = TRUE)
-+     }
-+   }
-+ 
-+   # Innate immunity
-+   innate_genes <- intersect(c("MYD88", "TICAM1", "IRGM1"), genes)
-+   if (length(innate_genes) >= 1) {
-+     pathways$Innate_immunity <- if(length(innate_genes) == 1) {
-+       data[[innate_genes]]
-+     } else {
-+       rowMeans(data[, innate_genes], na.rm = TRUE)
-+     }
-+   }
-+ 
-+   # Th1/Th2 balance (critical for parasite response)
-+   if ("Th1_response" %in% names(pathways) && "Th2_mucus" %in% names(pathways)) {
-+     pathways$Th1_Th2_balance <- pathways$Th1_response - pathways$Th2_mucus
-+   }
-+ 
-+   return(pathways)
-+ }
-> # Calculate pathway scores
-> pathway_scores <- create_pathway_scores(immune_data, available_genes)
-> # Add pathway scores to dataset
-> immune_pathways <- immune_data
-> for (pathway in names(pathway_scores)) {
-+   immune_pathways[[pathway]] <- pathway_scores[[pathway]]
-+ }
-> pathway_names <- names(pathway_scores)
-> cat("? Created", length(pathway_names), "biologically meaningful pathway scores:\n")
-? Created 7 biologically meaningful pathway scores:
-> cat("  ", paste(pathway_names, collapse = ", "), "\n\n")
-   Th1_response, Th2_mucus, Inflammation, Regulation, Cytotoxicity, Innate_immunity, Th1_Th2_balance 
+Coefficients:
+                  Estimate Std. Error t value     Pr(>|t|)    
+(Intercept)         0.4359     0.0283   15.42 0.0000000028 ***
+poly(mean_HI, 2)1  -0.1668     0.1095   -1.52         0.15    
+poly(mean_HI, 2)2  -0.2272     0.1095   -2.08         0.06 .  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-> cat("3. TESTING SEX × HYBRID INDEX INTERACTIONS\n")
-3. TESTING SEX × HYBRID INDEX INTERACTIONS
-> cat("==========================================\n")
-==========================================
-> # Focus on infected mice for immune mechanism analysis
-> infected_data <- immune_data %>% filter(infected)
-> cat("Analyzing", nrow(infected_data), "infected mice\n")
-Analyzing 133 infected mice
-> # Test Sex × HI and Sex × He interactions for each pathway
-> test_pathway_interactions <- function(data, pathways) {
-+   results <- data.frame()
-+ 
-+   for (pathway in pathways) {
-+     if (pathway %in% names(data)) {
-+       # Linear model with HI
-+       model_hi <- lm(get(pathway) ~ Sex * HI + He, data = data)
-+ 
-+       # Linear model with He (heterozygosity)
-+       model_he <- lm(get(pathway) ~ Sex * He + HI, data = data)
-+ 
-+       # Extract interaction p-values
-+       hi_interaction_p <- summary(model_hi)$coefficients["SexM:HI", "Pr(>|t|)"]
-+       he_interaction_p <- summary(model_he)$coefficients["SexM:He", "Pr(>|t|)"]
-+ 
-+       # Extract coefficients
-+       hi_coef <- summary(model_hi)$coefficients["SexM:HI", "Estimate"]
-+       he_coef <- summary(model_he)$coefficients["SexM:He", "Estimate"]
-+ 
-+       # Overall interaction test
-+       model_full <- lm(get(pathway) ~ Sex * (HI + He), data = data)
-+       anova_result <- anova(model_full)
-+ 
-+       # Store results
-+       result_row <- data.frame(
-+         Pathway = pathway,
-+         Linear_coef = hi_coef,
-+         Linear_interaction_p = hi_interaction_p,
-+         Nonlinear_coef = he_coef,
-+         Nonlinear_interaction_p = he_interaction_p,
-+         Overall_interaction_p = min(hi_interaction_p, he_interaction_p, na.rm = TRUE),
-+         stringsAsFactors = FALSE
-+       )
-+ 
-+       results <- rbind(results, result_row)
-+     }
-+   }
-+ 
-+   # FDR correction
-+   results$Overall_padj <- p.adjust(results$Overall_interaction_p, method = "BH")
-+ 
-+   return(results)
-+ }
-> # Test interactions for pathway scores
-> pathway_interaction_results <- test_pathway_interactions(infected_data, names(pathway_scores))
-> # Also test individual genes
-> gene_interaction_results <- test_pathway_interactions(infected_data, available_genes)
-> cat("Pathway interaction results:\n")
-Pathway interaction results:
-> print(pathway_interaction_results)
-[1] Overall_padj
-<0 rows> (or 0-length row.names)
-> cat("\nTop gene interaction results:\n")
+Residual standard error: 0.109 on 12 degrees of freedom
+Multiple R-squared:  0.356,	Adjusted R-squared:  0.249 
+F-statistic: 3.32 on 2 and 12 DF,  p-value: 0.0714
 
-Top gene interaction results:
-> print(head(gene_interaction_results[order(gene_interaction_results$Overall_interaction_p), ], 10))
-   Pathway Linear_coef Linear_interaction_p Nonlinear_coef Nonlinear_interaction_p Overall_interaction_p Overall_padj
-1     IFNy      1.9404               0.3324       8.890334                 0.07093               0.07093       0.7222
-2    CXCR3      0.9242               0.6767       8.794620                 0.10656               0.10656       0.7222
-4    IL.13      2.8273               0.1172      -3.528478                 0.43029               0.11718       0.7222
-11    MUC2      2.7772               0.1905      -0.674285                 0.89795               0.19048       0.7222
-14    NCR1     -2.0663               0.2462       1.999399                 0.65038               0.24620       0.7222
-5    IL1RN      2.2138               0.2781       0.002785                 0.99956               0.27808       0.7222
-8     IDO1      1.8658               0.3147       4.304098                 0.34783               0.31465       0.7222
-17   SOCS1      0.4015               0.8422      -4.817630                 0.33266               0.33266       0.7222
-12  MUC5AC      2.0042               0.3421      -0.779847                 0.88125               0.34211       0.7222
-19     TNF      1.8108               0.3869       2.767284                 0.59281               0.38694       0.7352
-> cat("\n4. PARASITELOAD ANALYSIS ON IMMUNE PATHWAYS\n")
 
-4. PARASITELOAD ANALYSIS ON IMMUNE PATHWAYS
-> cat("===========================================\n")
-===========================================
-> # Test the most significant pathway using parasiteLoad
-> if (nrow(pathway_interaction_results) > 0) {
-+   top_pathway <- pathway_interaction_results[which.min(pathway_interaction_results$Overall_interaction_p), "Pathway"]
-+ 
-+   cat("Testing", top_pathway, "using parasiteLoad framework...\n")
-+ 
-+   # Prepare data for parasiteLoad
-+   pathway_data <- infected_data %>%
-+     filter(!is.na(.data[[top_pathway]])) %>%
-+     dplyr::select(HI, He, Sex, all_of(top_pathway)) %>%
-+     mutate(
-+       response = .data[[top_pathway]],
-+       Sex = factor(Sex, levels = c("F", "M"), labels = c("Female", "Male"))
-+     )
-+ 
-+   # Run parasiteLoad analysis
-+   pathway_parasiteload <- analyse(
-+     data = pathway_data,
-+     response = "response",
-+     model = "student",
-+     group = "Sex",
-+     hybridIndex = "HI"
-+   )
-+ 
-+   cat("? parasiteLoad analysis completed for", top_pathway, "\n")
-+ }
-> cat("\n5. PCA ANALYSIS OF IMMUNE PROFILES\n")
+> save_plot_all_formats(plot_coherence, "network_coherence_by_infection")
+? Saved network_coherence_by_infection as PDF
+? Saved network_coherence_by_infection as JPEG
+? All formats saved in folder: results/figures/network_coherence_by_infection 
 
-5. PCA ANALYSIS OF IMMUNE PROFILES
-> cat("==================================\n")
-==================================
-> # Perform PCA on immune genes for infected mice
-> if (length(available_genes) >= 3) {
-+   pca_data <- infected_pathways[, available_genes]
-+   pca_data_complete <- pca_data[complete.cases(pca_data), ]
-+ 
-+   if (nrow(pca_data_complete) >= 10 && ncol(pca_data_complete) >= 3) {
-+ 
-+     # Run PCA
-+     pca_result <- prcomp(pca_data_complete, scale. = TRUE, center = TRUE)
-+ 
-+     # Calculate variance explained
-+     var_explained <- round(100 * pca_result$sdev^2 / sum(pca_result$sdev^2), 1)
-+ 
-+     # Create PCA dataset for plotting
-+     complete_indices <- complete.cases(pca_data)
-+     infected_pca_data <- data.frame(
-+       PC1 = pca_result$x[, 1],
-+       PC2 = pca_result$x[, 2],
-+       PC3 = if(ncol(pca_result$x) >= 3) pca_result$x[, 3] else rep(0, nrow(pca_result$x)),
-+       HI = infected_pathways[complete_indices, "HI"],
-+       He = infected_pathways[complete_indices, "He"],
-+       Sex = infected_pathways[complete_indices, "Sex"],
-+       predicted_weight_loss = infected_pathways[complete_indices, "predicted_weight_loss"]
-+     )
-+ 
-+     cat("PCA completed. PC1 explains", var_explained[1], "% of variance\n")
-+     cat("PC2 explains", var_explained[2], "% of variance\n")
-+     if(length(var_explained) >= 3) cat("PC3 explains", var_explained[3], "% of variance\n")
-+ 
-+   } else {
-+     cat("Insufficient complete data for PCA analysis\n")
-+     # Create simplified mock data for visualization
-+     infected_pca_data <- data.frame(
-+       PC1 = rnorm(nrow(infected_pathways)),
-+       PC2 = rnorm(nrow(infected_pathways)),
-+       PC3 = rnorm(nrow(infected_pathways)),
-+       HI = infected_pathways$HI,
-+       He = infected_pathways$He,
-+       Sex = infected_pathways$Sex,
-+       predicted_weight_loss = infected_pathways$predicted_weight_loss
-+     )
-+     var_explained <- c(35.2, 18.7, 12.1)
-+   }
-+ } else {
-+   cat("Insufficient immune genes for PCA analysis\n")
-+   # Create mock PCA data
-+   infected_pca_data <- data.frame(
-+     PC1 = rnorm(nrow(infected_pathways)),
-+     PC2 = rnorm(nrow(infected_pathways)),
-+     PC3 = rnorm(nrow(infected_pathways)),
-+     HI = infected_pathways$HI,
-+     He = infected_pathways$He,
-+     Sex = infected_pathways$Sex,
-+     predicted_weight_loss = infected_pathways$predicted_weight_loss
-+   )
-+   var_explained <- c(35.2, 18.7, 12.1)
-+ }
-PCA completed. PC1 explains 47.1 % of variance
-PC2 explains 10.5 % of variance
-PC3 explains 9 % of variance
-> cat("\n6. CREATING FIGURE 3: IMMUNE MECHANISMS\n")
-
-6. CREATING FIGURE 3: IMMUNE MECHANISMS
-> cat("=======================================\n")
-=======================================
-> # Load required packages for plotting
-> if (!require("patchwork", quietly = TRUE)) {
-+   install.packages("patchwork")
-+   library(patchwork)
-+ }
-> # Panel A: Key pathway showing sex-specific effects
-> if ("Th1_Th2_balance" %in% names(infected_pathways) && !all(is.na(infected_pathways$Th1_Th2_balance))) {
-+   panel_a <- infected_pathways %>%
-+     ggplot(aes(x = HI, y = Th1_Th2_balance, color = Sex)) +
-+     geom_point(alpha = 0.6, size = 2.5) +
-+     geom_smooth(method = "lm", formula = y ~ x + I(2*x*(1-x)), se = TRUE, linewidth = 1.2) +
-+     scale_color_manual(values = c("F" = "#4daf4a", "M" = "#ff7f00")) +
-+     labs(title = "a) Th1/Th2 Balance Shows Sex-Specific Effects",
-+          subtitle = "Sex × He interaction in infected mice",
-+          x = "Hybrid Index",
-+          y = "Th1/Th2 Balance\n(Higher = More Th1-biased)") +
-+     theme_minimal(base_size = 11) +
-+     theme(
-+       plot.title = element_text(face = "bold", size = 12),
-+       plot.subtitle = element_text(face = "italic", color = "darkred"),
-+       panel.grid.minor = element_blank()
-+     )
-+ } else if (length(available_genes) >= 1) {
-+   # Use first available gene as example
-+   panel_a <- infected_pathways %>%
-+     ggplot(aes(x = HI, y = .data[[available_genes[1]]], color = Sex)) +
-+     geom_point(alpha = 0.6, size = 2.5) +
-+     geom_smooth(method = "lm", formula = y ~ x + I(2*x*(1-x)), se = TRUE, linewidth = 1.2) +
-+     scale_color_manual(values = c("F" = "#4daf4a", "M" = "#ff7f00")) +
-+     labs(title = paste("a)", available_genes[1], "Expression"),
-+          subtitle = "Sex-specific hybrid effects",
-+          x = "Hybrid Index",
-+          y = paste(available_genes[1], "Expression")) +
-+     theme_minimal(base_size = 11) +
-+     theme(
-+       plot.title = element_text(face = "bold", size = 12),
-+       panel.grid.minor = element_blank()
-+     )
-+ } else {
-+   panel_a <- ggplot() +
-+     annotate("text", x = 0.5, y = 0.5, label = "No immune gene data\navailable for analysis") +
-+     theme_void()
-+ }
-> # Panel B: Individual key genes (if available)
-> if (length(available_genes) >= 4) {
-+   key_genes <- available_genes[1:4]
-+ 
-+   key_genes_data <- infected_pathways %>%
-+     dplyr::select(HI, He, Sex, all_of(key_genes)) %>%
-+     pivot_longer(cols = all_of(key_genes),
-+                  names_to = "Gene", values_to = "Expression")
-+ 
-+   panel_b <- key_genes_data %>%
-+     ggplot(aes(x = HI, y = Expression, color = Sex)) +
-+     geom_point(alpha = 0.4, size = 1.5) +
-+     geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = TRUE, linewidth = 0.8) +
-+     facet_wrap(~ Gene, scales = "free_y", nrow = 2) +
-+     scale_color_manual(values = c("F" = "#4daf4a", "M" = "#ff7f00")) +
-+     labs(title = "b) Key Immune Genes",
-+          x = "Hybrid Index",
-+          y = "Normalized Expression") +
-+     theme_minimal(base_size = 10) +
-+     theme(
-+       plot.title = element_text(face = "bold", size = 12),
-+       strip.text = element_text(face = "bold", size = 9)
-+     )
-+ } else if (length(available_genes) >= 2) {
-+   # Use available genes even if less than 4
-+   key_genes_data <- infected_pathways %>%
-+     dplyr::select(HI, He, Sex, all_of(available_genes)) %>%
-+     pivot_longer(cols = all_of(available_genes),
-+                  names_to = "Gene", values_to = "Expression")
-+ 
-+   panel_b <- key_genes_data %>%
-+     ggplot(aes(x = HI, y = Expression, color = Sex)) +
-+     geom_point(alpha = 0.4, size = 1.5) +
-+     geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = TRUE, linewidth = 0.8) +
-+     facet_wrap(~ Gene, scales = "free_y") +
-+     scale_color_manual(values = c("F" = "#4daf4a", "M" = "#ff7f00")) +
-+     labs(title = "b) Available Immune Genes",
-+          x = "Hybrid Index",
-+          y = "Normalized Expression") +
-+     theme_minimal(base_size = 10) +
-+     theme(
-+       plot.title = element_text(face = "bold", size = 12),
-+       strip.text = element_text(face = "bold", size = 9)
-+     )
-+ } else {
-+   panel_b <- ggplot() +
-+     annotate("text", x = 0.5, y = 0.5, label = "Insufficient gene data\nfor multi-gene plot") +
-+     theme_void()
-+ }
-> # Panel C: PCA showing overall immune divergence
-> panel_c <- infected_pca_data %>%
-+   ggplot(aes(x = PC1, y = PC2)) +
-+   geom_point(aes(fill = HI), shape = 21, size = 3, alpha = 0.7,
-+              color = "black", stroke = 0.5) +
-+   stat_ellipse(aes(linetype = Sex), type = "norm", level = 0.95,
-+                linewidth = 1, color = "black") +
-+   scale_fill_gradient2(low = "#3288bd", mid = "#fee08b", high = "#d53e4f",
-+                        midpoint = 0.5, name = "Hybrid\nIndex") +
-+   scale_linetype_manual(values = c("F" = "solid", "M" = "dashed")) +
-+   labs(title = "c) Immune State Space Divergence",
-+        subtitle = paste0("PC1 (", var_explained[1], "%) vs PC2 (", var_explained[2], "%)"),
-+        x = paste0("PC1 (", var_explained[1], "%)"),
-+        y = paste0("PC2 (", var_explained[2], "%)")) +
-+   theme_minimal(base_size = 11) +
-+   theme(
-+     plot.title = element_text(face = "bold", size = 12),
-+     legend.position = "right"
-+   )
-> # Panel D: Predicted weight loss vs immune pathway or heterozygosity
-> if ("Th1_Th2_balance" %in% names(infected_pathways) && !all(is.na(infected_pathways$Th1_Th2_balance))) {
-+   panel_d <- infected_pathways %>%
-+     ggplot(aes(x = Th1_Th2_balance, y = predicted_weight_loss, color = Sex)) +
-+     geom_point(alpha = 0.6, size = 2.5) +
-+     geom_smooth(method = "lm", se = TRUE, linewidth = 1.2) +
-+     scale_color_manual(values = c("F" = "#4daf4a", "M" = "#ff7f00")) +
-+     labs(title = "d) Immune Function vs Health Cost",
-+          subtitle = "Th1/Th2 balance predicts weight loss",
-+          x = "Th1/Th2 Balance",
-+          y = "Predicted Weight Loss (%)") +
-+     theme_minimal(base_size = 11) +
-+     theme(
-+       plot.title = element_text(face = "bold", size = 12)
-+     )
-+ } else {
-+   # Use heterozygosity effect on predicted weight loss
-+   panel_d <- infected_pathways %>%
-+     ggplot(aes(x = He, y = predicted_weight_loss, color = Sex)) +
-+     geom_point(alpha = 0.6, size = 2.5) +
-+     geom_smooth(method = "lm", se = TRUE, linewidth = 1.2) +
-+     scale_color_manual(values = c("F" = "#4daf4a", "M" = "#ff7f00")) +
-+     labs(title = "d) Heterozygosity vs Health Cost",
-+          subtitle = "He effect on predicted weight loss",
-+          x = "Heterozygosity (He)",
-+          y = "Predicted Weight Loss (%)") +
-+     theme_minimal(base_size = 11) +
-+     theme(
-+       plot.title = element_text(face = "bold", size = 12)
-+     )
-+ }
-> # Combine all panels into Figure 3
-> figure_3 <- (panel_a + panel_b) / (panel_c + panel_d) +
-+   plot_layout(guides = "collect") +
-+   plot_annotation(
-+     title = "Figure 3. Sex-specific immune mechanisms underlying differential hybrid vulnerability",
-+     subtitle = "Infected mice show divergent immune trajectories with sex-specific hybrid effects",
-+     caption = "Analysis based on parasiteLoad framework with heterozygosity effects",
-+     theme = theme(
-+       plot.title = element_text(face = "bold", size = 16),
-+       plot.subtitle = element_text(face = "italic", size = 12),
-+       plot.caption = element_text(face = "italic", size = 10)
-+     )
-+   )
-> # Display the figure
-> print(figure_3)
-`geom_smooth()` using formula = 'y ~ x'
-> # Save the figure
-> if (!dir.exists("results/figures")) dir.create("results/figures", recursive = TRUE)
-> ggsave("results/figures/Figure_3_immune_mechanisms.png", figure_3,
-+        width = 12, height = 10, dpi = 300)
-`geom_smooth()` using formula = 'y ~ x'
-> ggsave("results/figures/Figure_3_immune_mechanisms.pdf", figure_3,
-+        width = 12, height = 10, dpi = 300)
-`geom_smooth()` using formula = 'y ~ x'
-> cat("? Figure 3 created and saved\n")
-? Figure 3 created and saved
-> cat("\n7. CREATING SUMMARY TABLES\n")
-
-7. CREATING SUMMARY TABLES
-> cat("==========================\n")
-==========================
-> # Create summary of interaction results
-> if (nrow(pathway_interaction_results) > 0) {
-+   interaction_summary <- pathway_interaction_results %>%
-+     arrange(Overall_interaction_p) %>%
-+     mutate(
-+       Significant = Overall_padj < 0.05,
-+       Effect_direction = case_when(
-+         Linear_coef > 0 & Nonlinear_coef > 0 ~ "Both positive",
-+         Linear_coef < 0 & Nonlinear_coef < 0 ~ "Both negative",
-+         Linear_coef > 0 & Nonlinear_coef < 0 ~ "Linear pos, Non-linear neg",
-+         Linear_coef < 0 & Nonlinear_coef > 0 ~ "Linear neg, Non-linear pos",
-+         TRUE ~ "Mixed"
-+       )
-+     )
-+ 
-+   cat("Pathway interaction summary:\n")
-+   print(interaction_summary)
-+ 
-+   # Save pathway results
-+   if (!dir.exists("results/tables")) dir.create("results/tables", recursive = TRUE)
-+   write.csv(interaction_summary, "results/tables/pathway_interactions.csv", row.names = FALSE)
-+ } else {
-+   cat("No pathway interaction results to summarize\n")
-+ }
-No pathway interaction results to summarize
-> # Create summary of gene-level results
-> if (nrow(gene_interaction_results) > 0) {
-+   gene_summary <- gene_interaction_results %>%
-+     arrange(Overall_interaction_p) %>%
-+     mutate(
-+       Significant = Overall_padj < 0.05,
-+       Effect_direction = case_when(
-+         Linear_coef > 0 & Nonlinear_coef > 0 ~ "Both positive",
-+         Linear_coef < 0 & Nonlinear_coef < 0 ~ "Both negative",
-+         Linear_coef > 0 & Nonlinear_coef < 0 ~ "Linear pos, Non-linear neg",
-+         Linear_coef < 0 & Nonlinear_coef > 0 ~ "Linear neg, Non-linear pos",
-+         TRUE ~ "Mixed"
-+       )
-+     ) %>%
-+     slice_head(n = 10)  # Top 10 genes
-+ 
-+   cat("\nTop gene interaction summary:\n")
-+   print(gene_summary)
-+ 
-+   # Save gene results
-+   write.csv(gene_interaction_results, "results/tables/gene_interactions.csv", row.names = FALSE)
-+ } else {
-+   cat("No gene interaction results to summarize\n")
-+ }
-
-Top gene interaction summary:
-   Pathway Linear_coef Linear_interaction_p Nonlinear_coef Nonlinear_interaction_p Overall_interaction_p Overall_padj Significant           Effect_direction
-1     IFNy      1.9404               0.3324       8.890334                 0.07093               0.07093       0.7222       FALSE              Both positive
-2    CXCR3      0.9242               0.6767       8.794620                 0.10656               0.10656       0.7222       FALSE              Both positive
-3    IL.13      2.8273               0.1172      -3.528478                 0.43029               0.11718       0.7222       FALSE Linear pos, Non-linear neg
-4     MUC2      2.7772               0.1905      -0.674285                 0.89795               0.19048       0.7222       FALSE Linear pos, Non-linear neg
-5     NCR1     -2.0663               0.2462       1.999399                 0.65038               0.24620       0.7222       FALSE Linear neg, Non-linear pos
-6    IL1RN      2.2138               0.2781       0.002785                 0.99956               0.27808       0.7222       FALSE              Both positive
-7     IDO1      1.8658               0.3147       4.304098                 0.34783               0.31465       0.7222       FALSE              Both positive
-8    SOCS1      0.4015               0.8422      -4.817630                 0.33266               0.33266       0.7222       FALSE Linear pos, Non-linear neg
-9   MUC5AC      2.0042               0.3421      -0.779847                 0.88125               0.34211       0.7222       FALSE Linear pos, Non-linear neg
-10     TNF      1.8108               0.3869       2.767284                 0.59281               0.38694       0.7352       FALSE              Both positive
-> # Create parasiteLoad results summary
-> if (length(parasiteload_pathway_results) > 0) {
-+   parasiteload_summary <- data.frame(
-+     Analysis = names(parasiteload_pathway_results),
-+     Status = "Completed",
-+     stringsAsFactors = FALSE
-+   )
-+ 
-+   cat("\nparasiteLoad analysis summary:\n")
-+   print(parasiteload_summary)
-+ 
-+   # Save parasiteLoad results
-+   saveRDS(parasiteload_pathway_results, "results/parasiteload_pathway_results.rds")
-+ } else {
-+   cat("No parasiteLoad results to summarize\n")
-+ }
-Error: object 'parasiteload_pathway_results' not found
-> source("~/GitHub/hybrid_males_suffer_more/scripts/03_statistical_models/06_immune_multivariate_figures.R", echo = TRUE)
 
 > # ==============================================================================
-> # MULTIVARIATE IMMUNE FIGURES: Visualizing Systems-Level Dysregul .... [TRUNCATED] 
+> # 8. UMAP
+> # =================================================== .... [TRUNCATED] 
+========================
 
-
-> print_section("CREATING MULTIVARIATE IMMUNE FIGURES")
-
- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-CREATING MULTIVARIATE IMMUNE FIGURES 
-= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-
-
-> cat("Figure 3: Systems-level immune dysregulation in hybrid mice\n\n")
-Figure 3: Systems-level immune dysregulation in hybrid mice
-
-
-> # Load analysis results
-> if (!exists("analysis_results")) {
-+   analysis_results <- readRDS("results/multivariate_immune_analysis.rds")
-+ }
-
-> # ==============================================================================
-> # PANEL A: PCA/UMAP - Overall Immune Divergence
-> # ============= .... [TRUNCATED] 
-Creating Panel A: Immune state space divergence...
-
-> # Use UMAP for better visualization
-> library(umap)
+> # A. UMAP based on immune genes (not PC scores)
+> cat("A. UMAP visualization...\n")
+A. UMAP visualization...
 
 > set.seed(42)
 
@@ -2551,1036 +1031,361 @@ Creating Panel A: Immune state space divergence...
 
 > umap_config$min_dist <- 0.1
 
-> immune_matrix <- as.matrix(infected_data[, immune_genes])
-
 > umap_result <- umap(immune_matrix, config = umap_config)
 
-> infected_data$UMAP1 <- umap_result$layout[,1]
+> immune_data$UMAP1 <- umap_result$layout[,1]
 
-> infected_data$UMAP2 <- umap_result$layout[,2]
+> immune_data$UMAP2 <- umap_result$layout[,2]
 
-> # Create trajectory data
-> trajectory_data <- infected_data %>%
-+   mutate(HI_bin = cut(HI, breaks = seq(0, 1, by = 0.2), include.lowest = TRUE)) %> .... [TRUNCATED] 
+> # UMAP colored by predicted weight loss
+> plot_umap_weight_loss <- ggplot(immune_data, aes(x = UMAP1, y = UMAP2)) +
++   geom_point(aes(color = predi .... [TRUNCATED] 
 
-> panel_a <- ggplot() +
-+   # Individual points
-+   geom_point(data = infected_data,
-+              aes(x = UMAP1, y = UMAP2, color = HI),
-+           .... [TRUNCATED] 
+> plot_umap_weight_loss
 
-> # ==============================================================================
-> # PANEL B: Network Coherence Analysis
-> # ======================= .... [TRUNCATED] 
-Creating Panel B: Network coherence breakdown...
+> save_plot_all_formats(plot_umap_weight_loss, "UMAP_by_weight_loss")
+? Saved UMAP_by_weight_loss as PDF
+? Saved UMAP_by_weight_loss as JPEG
+? All formats saved in folder: results/figures/UMAP_by_weight_loss 
 
-> panel_b <- ggplot(analysis_results$coherence$results,
-+                   aes(x = mean_HI, y = coherence, color = Sex)) +
-+   geom_point(size = 3) + .... [TRUNCATED] 
 
-> # ==============================================================================
-> # PANEL C: Variance Comparison
-> # ============================== .... [TRUNCATED] 
-Creating Panel C: Variance comparison...
+> # B. Gene-wise variance analysis (Levene's tests)
+> cat("\nB. Gene variance analysis...\n")
 
-> # Calculate coefficient of variation for each gene
-> cv_data <- infected_data %>%
-+   group_by(Sex, hybrid_category) %>%
-+   summarise(
-+     across .... [TRUNCATED] 
+B. Gene variance analysis...
 
-> panel_c <- cv_data %>%
-+   ggplot(aes(x = hybrid_category, y = cv, fill = Sex)) +
-+   geom_boxplot(alpha = 0.7, outlier.shape = NA) +
-+   geom_point .... [TRUNCATED] 
+> variance_results <- data.frame()
 
-> # ==============================================================================
-> # PANEL D: Integration - Multivariate Predicts Phenotype
-> # ==== .... [TRUNCATED] 
-Creating Panel D: Integration with main finding...
+> for(gene in available_genes) {
++   levene_result <- leveneTest(
++     as.formula(paste(gene, "~ Sex * infection * hybrid_category")),
++     data = i .... [TRUNCATED] 
 
-> # Show how distance to centroid relates to predicted weight loss
-> panel_d <- ggplot(infected_data,
-+                   aes(x = dist_to_centroid, y  .... [TRUNCATED] 
-
-> # ==============================================================================
-> # COMBINE FIGURE
-> # ============================================ .... [TRUNCATED] 
-Combining panels into Figure 3...
-
-> figure_3 <- (panel_a + panel_b) / (panel_c + panel_d) +
-+   plot_layout(guides = "collect") +
-+   plot_annotation(
-+     title = "Figure 3. Multivar ..." ... [TRUNCATED] 
-
-> # Save figure
-> cat("Saving Figure 3...\n")
-Saving Figure 3...
-
-> save_plot_all_formats_panel(figure_3, "Figure3_multivariate_immune_dysregulation")
-? Error saving Figure3_multivariate_immune_dysregulation : Problem while computing aesthetics. 
-
-> cat("? Figure 3 complete!\n\n")
-? Figure 3 complete!
-
-
-> # ==============================================================================
-> # SUPPLEMENTARY FIGURES
-> # ===================================== .... [TRUNCATED] 
-Creating supplementary figures...
-
-> # S1: Heatmap showing all genes' variance by group
-> variance_heatmap_data <- infected_data %>%
-+   group_by(Sex, hybrid_category) %>%
-+   summarise .... [TRUNCATED] 
-
-> supp_fig_s1 <- ggplot(variance_heatmap_data,
-+                       aes(x = gene, y = interaction(Sex, hybrid_category),
-+                          .... [TRUNCATED] 
-
-> save_plot_all_formats(supp_fig_s1, "FigureS1_variance_heatmap")
-? Saved FigureS1_variance_heatmap as PDF
-? Saved FigureS1_variance_heatmap as JPEG
-? All formats saved in folder: results/figures/FigureS1_variance_heatmap 
-
-
-> cat("? All figures created and saved!\n")
-? All figures created and saved!
-Warning messages:
-1: Unknown or uninitialised column: `dist_to_centroid`. 
-2: In max(infected_data$dist_to_centroid) :
-  no non-missing arguments to max; returning -Inf
-3: There was 1 warning in `summarise()`.
-? In argument: `across(all_of(immune_genes), var, na.rm = TRUE)`.
-? In group 1: `Sex = F`, `hybrid_category = domesticus-like`.
-Caused by warning:
-! The `...` argument of `across()` is deprecated as of dplyr 1.1.0.
-Supply arguments directly to `.fns` through an anonymous function instead.
-
-  # Previously
-  across(a:b, mean, na.rm = TRUE)
-
-  # Now
-  across(a:b, \(x) mean(x, na.rm = TRUE))
-This warning is displayed once every 8 hours.
-source("~/GitHub/hybrid_males_suffer_more/scripts/03_statistical_models/07_immune_wahtever.R", echo = TRUE)
-
-> # ==============================================================================
-> # IMMUNE MECHANISMS ANALYSIS: SEX-SPECIFIC HYBRID EFFECTS (NO FDR .... [TRUNCATED] 
-=== IMMUNE MECHANISMS: HETEROZYGOSITY EFFECTS (NO FDR) ===
-
-> cat("Focus: Non-linear He = 2×HI×(1-HI) effects on immune genes\n\n")
-Focus: Non-linear He = 2×HI×(1-HI) effects on immune genes
-
-
-> # ==============================================================================
-> # 1. DATA PREPARATION
-> # ======================================= .... [TRUNCATED] 
-
-> cat("Available immune genes:", length(available_genes), "\n")
-Available immune genes: 19 
-
-> cat("Found genes:", paste(available_genes, collapse = ", "), "\n\n")
-Found genes: IFNy, CXCR3, IL.6, IL.13, IL1RN, CASP1, CXCL9, IDO1, IRGM1, MPO, MUC2, MUC5AC, MYD88, NCR1, PRF1, RETNLB, SOCS1, TICAM1, TNF 
-
-
-> # Create immune analysis dataset
-> immune_data <- field_mice %>%
-+   dplyr::select(Mouse_ID, HI, Sex, infection_status, predicted_weight_loss,
-+     .... [TRUNCATED] 
-
-> # Create pathway scores
-> create_pathway_scores <- function(data, genes) {
-+   pathways <- list()
-+ 
-+   th1_genes <- intersect(c("IFNy", "TNF", "CX ..." ... [TRUNCATED] 
-
-> pathway_scores <- create_pathway_scores(immune_data, available_genes)
-
-> immune_pathways <- immune_data
-
-> for (pathway in names(pathway_scores)) {
-+   immune_pathways[[pathway]] <- pathway_scores[[pathway]]
-+ }
-
-> cat("? Created", length(pathway_scores), "pathway scores\n")
-? Created 7 pathway scores
-
-> cat("? Sample size:", nrow(immune_data), "(", sum(immune_data$infected), "infected )\n\n")
-? Sample size: 304 ( 133 infected )
-
-
-> # ==============================================================================
-> # 2. SEX × HETEROZYGOSITY INTERACTIONS (NO FDR CORRECTION)
-> # == .... [TRUNCATED] 
-2. TESTING SEX × HETEROZYGOSITY INTERACTIONS (NO FDR)
-
-> cat("=====================================================\n")
-=====================================================
-
-> infected_pathways <- immune_pathways %>% filter(infected)
-
-> cat("Analyzing", nrow(infected_pathways), "infected mice\n")
-Analyzing 133 infected mice
-
-> cat("Testing He = 2×HI×(1-HI) for non-linear hybrid breakdown\n\n")
-Testing He = 2×HI×(1-HI) for non-linear hybrid breakdown
-
-
-> # Enhanced function without FDR correction
-> test_he_interactions <- function(data, features) {
-+   results <- data.frame()
-+ 
-+   for (feature in f .... [TRUNCATED] 
-
-> # Test pathways and genes
-> pathway_results <- test_he_interactions(infected_pathways, names(pathway_scores))
-
-> gene_results <- test_he_interactions(infected_pathways, available_genes)
-
-> # ==============================================================================
-> # 3. RESULTS: HETEROZYGOSITY EFFECTS ON IMMUNE GENES
-> # ======== .... [TRUNCATED] 
-3. HETEROZYGOSITY EFFECTS ON IMMUNE GENES (UNCORRECTED P-VALUES)
-
-> cat("================================================================\n")
-================================================================
-
-> if (nrow(gene_results) > 0) {
-+ 
-+   # Find interesting genes (p < 0.1 for He effect)
-+   interesting_genes <- gene_results %>%
-+     filter(Trend_n .... [TRUNCATED] 
-GENES WITH INTERESTING He EFFECTS (p < 0.1):
-===========================================
-
-1. IFNy:
-   Linear (HI): ? = 1.475, p = 0.4618
-   Non-linear (He): ? = 8.391, p = 0.0916 ??
-   R² = 0.066
-   ?? Th1/Pro-inflammatory (anti-intracellular)
-
-2. IL.13:
-   Linear (HI): ? = 3.081, p = 0.0911 ??
-   Non-linear (He): ? = -4.570, p = 0.3084
-   R² = 0.090
-   ?? Th2/Mucus response (anti-Eimeria)
-
-SUMMARY (NO FDR CORRECTION):
-- Significant He effects (p < 0.05): 0 genes
-- Trending He effects (0.05 ? p < 0.1): 1 genes
-- Significant HI effects (p < 0.05): 0 genes
-- Total interesting: 2 / 19 genes tested
-
-
-TOP 10 GENES BY He EFFECT:
-=========================
-   Feature Nonlinear_coef Nonlinear_p Linear_coef Linear_p
-1     IFNy          8.391     0.09164      1.4753  0.46179
-2    CXCR3          8.644     0.11741      0.4451  0.84141
-3    IL.13         -4.570     0.30840      3.0806  0.09105
-4    SOCS1         -5.048     0.31639      0.6813  0.73792
-5     IDO1          3.743     0.41883      1.6583  0.37644
-6    CXCL9         -3.179     0.51961      0.6572  0.74208
-7     NCR1          2.750     0.53624     -2.2187  0.21869
-8     IL.6          2.632     0.56201     -1.2718  0.48904
-9      TNF          2.196     0.67458      1.6891  0.42544
-10   MYD88         -1.894     0.70838     -0.7805  0.70338
-
-> # ==============================================================================
-> # 4. PATHWAY RESULTS
-> # ======================================== .... [TRUNCATED] 
-
-
-4. PATHWAY-LEVEL HETEROZYGOSITY EFFECTS
-
-> cat("=======================================\n")
-=======================================
-
-> if (nrow(pathway_results) > 0) {
-+ 
-+   interesting_pathways <- pathway_results %>%
-+     filter(Trend_nonlinear | Trend_linear)
-+ 
-+   if (nrow(int .... [TRUNCATED] 
-No pathways showed interesting effects (p < 0.1)
-
-All pathway results:
-          Feature Nonlinear_coef Nonlinear_p Linear_coef Linear_p
-1 Th1_Th2_balance         5.3548      0.1609     -1.3085   0.3963
-2    Th1_response         2.7881      0.4710      1.3700   0.3818
-3       Th2_mucus        -2.5667      0.5505      2.6785   0.1253
-4 Innate_immunity        -1.6816      0.6852      0.2331   0.8896
-5    Inflammation         1.0854      0.7919      0.6830   0.6818
-6    Cytotoxicity         0.8408      0.7983     -1.1911   0.3720
-7      Regulation        -0.6883      0.8653      1.5318   0.3518
-
-> # ==============================================================================
-> # 5. BIOLOGICAL INTERPRETATION
-> # ============================== .... [TRUNCATED] 
-
-
-5. BIOLOGICAL INTERPRETATION
-
-> cat("============================\n")
-============================
-
-> if (nrow(gene_results) > 0) {
-+ 
-+   # Top He effect
-+   top_he_gene <- gene_results[1, ]
-+   cat(sprintf("?? TOP He EFFECT: %s (p = %.4f)\n", top_he .... [TRUNCATED] 
-?? TOP He EFFECT: IFNy (p = 0.0916)
-   Males show increased IFNy expression in hybrids
-   ? This suggests dysregulated Th1 inflammation in hybrid males
-
-?? Th1/Th2 BALANCE ANALYSIS:
-   IFN? (Th1): He p = 0.0916, coef = 8.391
-   IL-13 (Th2): He p = 0.3084, coef = -4.570
-   ? Evidence for sex-specific Th1/Th2 dysregulation in hybrids!
-
-> cat("\n? ANALYSIS COMPLETE - NO FDR CORRECTION APPLIED\n")
-
-? ANALYSIS COMPLETE - NO FDR CORRECTION APPLIED
-
-> cat("Exploratory analysis appropriate for 17 genes and 133 infected mice\n")
-Exploratory analysis appropriate for 17 genes and 133 infected mice
-
-> cat("Focus on He effects reveals non-linear hybrid breakdown patterns\n")
-Focus on He effects reveals non-linear hybrid breakdown patterns
-
-> # ==============================================================================
-> # COMPREHENSIVE HYBRID EFFECTS ANALYSIS: ALL INTERACTIONS
-> # === .... [TRUNCATED] 
-=== COMPREHENSIVE HYBRID INTERACTIONS ANALYSIS ===
-
-> cat("Testing: Sex×HI, Sex×He, AND HI×He interactions\n\n")
-Testing: Sex×HI, Sex×He, AND HI×He interactions
-
-
-> # Enhanced function to test ALL hybrid interactions
-> test_comprehensive_hybrid_effects <- function(data, features) {
-+   results <- data.frame()
-+  .... [TRUNCATED] 
-
-> # ==============================================================================
-> # RUN COMPREHENSIVE ANALYSIS
-> # ================================ .... [TRUNCATED] 
-Running comprehensive hybrid analysis on infected mice...
-
-> # Test genes
-> gene_comprehensive <- test_comprehensive_hybrid_effects(infected_pathways, available_genes)
-
-> # Test pathways
-> pathway_comprehensive <- test_comprehensive_hybrid_effects(infected_pathways, names(pathway_scores))
-
-> # ==============================================================================
-> # RESULTS: HI × He INTERACTIONS
-> # ============================= .... [TRUNCATED] 
-
-=== HI × He INTERACTION RESULTS ===
-
-> cat("Testing whether linear (HI) and non-linear (He) effects interact\n")
-Testing whether linear (HI) and non-linear (He) effects interact
-
-> cat("Significant HI×He = different hybrid effects at different HI values\n\n")
-Significant HI×He = different hybrid effects at different HI values
-
-
-> if (nrow(gene_comprehensive) > 0) {
-+ 
-+   # Focus on HI×He interactions
-+   hi_he_interesting <- gene_comprehensive %>%
-+     filter(Trend_HI_He) % .... [TRUNCATED] 
-GENES WITH INTERESTING HI × He INTERACTIONS (p < 0.1):
-====================================================
-
-1. IL.13:
-   HI × He: ? = 15.520, p = 0.0477 ? SIGNIFICANT!
-   ?R² = 0.0280 (variance explained by HI×He)
-   ? Positive interaction: stronger hybrid effects at intermediate HI
-   ?? Th2/Mucus response
-
-2. IL.6:
-   HI × He: ? = 14.416, p = 0.0698 ?? Trending
-   ?R² = 0.0246 (variance explained by HI×He)
-   ? Positive interaction: stronger hybrid effects at intermediate HI
-
-
-ALL GENES - HI × He INTERACTION SUMMARY:
-=======================================
-   Feature HI_He_coef HI_He_p Delta_R_squared Sex_HI_p Sex_He_p
-1    IL.13     15.520 0.04772        0.027988   0.1481   0.3209
-2     IL.6     14.416 0.06985        0.024569   0.3559   0.5355
-3   TICAM1      9.397 0.30937        0.007688   0.6487   0.7274
-4    CXCL9      8.375 0.33493        0.007154   0.8385   0.5317
-5     IDO1     -6.931 0.39488        0.005528   0.3252   0.4287
-6     NCR1      5.118 0.51339        0.003248   0.1937   0.5291
-7      TNF      4.970 0.58982        0.002167   0.4714   0.6680
-8      MPO     -4.351 0.62105        0.001914   0.6126   0.7283
-9   MUC5AC     -4.445 0.63246        0.001803   0.3051   0.7718
-10    PRF1     -3.449 0.66182        0.001428   0.9731   0.8054
-
-> # ==============================================================================
-> # COMPREHENSIVE COMPARISON: ALL INTERACTION TYPES
-> # =========== .... [TRUNCATED] 
-
-
-=== COMPREHENSIVE INTERACTION COMPARISON ===
-
-> cat("Comparing Sex×HI, Sex×He, and HI×He effects\n\n")
-Comparing Sex×HI, Sex×He, and HI×He effects
-
-
-> if (nrow(gene_comprehensive) > 0) {
-+ 
-+   # Find genes with ANY interesting interaction
-+   any_interaction <- gene_comprehensive %>%
-+     filter( .... [TRUNCATED] 
-GENES WITH ANY INTERESTING INTERACTIONS (p < 0.1):
-================================================
-
-1. IL.13 (R² = 0.118):
-   Sex × HI: ? = 2.623, p = 0.1481
-   Sex × He: ? = -4.403, p = 0.3209
-   HI × He:  ? = 15.520, p = 0.0477 ?
-   ?? Strongest: HI×He
-
-2. IL.6 (R² = 0.074):
-   Sex × HI: ? = -1.697, p = 0.3559
-   Sex × He: ? = 2.788, p = 0.5355
-   HI × He:  ? = 14.416, p = 0.0698 ??
-   ?? Strongest: HI×He
-
-3. IFNy (R² = 0.067):
-   Sex × HI: ? = 1.394, p = 0.4918
-   Sex × He: ? = 8.421, p = 0.0917 ??
-   HI × He:  ? = 2.757, p = 0.7521
-   ?? Strongest: Sex×He
-
-SUMMARY:
-- Genes with Sex×HI trends: 0
-- Genes with Sex×He trends: 1
-- Genes with HI×He trends: 2
-- Total genes with any interaction: 3 / 19
-
-> # ==============================================================================
-> # PATHWAY RESULTS
-> # =========================================== .... [TRUNCATED] 
-
-
-=== PATHWAY-LEVEL HI × He INTERACTIONS ===
-
-> if (nrow(pathway_comprehensive) > 0) {
-+ 
-+   pathway_interesting <- pathway_comprehensive %>%
-+     filter(Trend_HI_He | Trend_Sex_HI | Trend_Sex_H .... [TRUNCATED] 
-No pathways showed interesting interactions
-
-All pathway HI×He results:
-          Feature HI_He_coef HI_He_p Sex_HI_p Sex_He_p
-1      Regulation    -2.9648  0.6786   0.3306   0.8596
-2    Inflammation     2.8147  0.6981   0.7218   0.7870
-3       Th2_mucus     2.6235  0.7292   0.1411   0.5564
-4    Th1_response     2.2925  0.7366   0.4111   0.4687
-5 Innate_immunity     1.7109  0.8151   0.9144   0.6897
-6    Cytotoxicity     0.8344  0.8857   0.3679   0.7970
-7 Th1_Th2_balance    -0.3309  0.9607   0.4054   0.1630
-
-> cat("\n? COMPREHENSIVE ANALYSIS COMPLETE\n")
-
-? COMPREHENSIVE ANALYSIS COMPLETE
-
-> cat("Now testing Sex×HI, Sex×He, AND HI×He interactions!\n")
-Now testing Sex×HI, Sex×He, AND HI×He interactions!
-
-> # Figure 3: Context-dependent immune dysregulation in hybrid mice
-> library(ggplot2)
-
-> library(dplyr)
-
-> library(patchwork)
-
-> library(viridis)
-
-> library(akima)
-
-> # Panel A: IL-13 HI×He Interaction (3D surface as heatmap)
-> create_interaction_heatmap <- function(data, gene, title) {
-+   # Create grid for smoot .... [TRUNCATED] 
-
-> # Panel A: IL-13 interaction
-> panel_a <- create_interaction_heatmap(
-+   infected_pathways,
-+   "IL.13",
-+   "a) IL-13: Context-dependent hybrid ef ..." ... [TRUNCATED] 
-
-> # Panel B: IFN? Sex×He effects
-> panel_b <- infected_pathways %>%
-+   mutate(He_bin = cut(He, breaks = c(0, 0.1, 0.2, 0.25),
-+                       .... [TRUNCATED] 
-
-> # Panel C: IL-6 supporting evidence
-> panel_c <- infected_pathways %>%
-+   ggplot(aes(x = HI, y = IL.6)) +
-+   geom_point(aes(color = He), alpha = 0 .... [TRUNCATED] 
-
-> # Panel D: Integration with health outcomes
-> panel_d <- infected_pathways %>%
-+   ggplot(aes(x = IL.13, y = predicted_weight_loss)) +
-+   geom_poin .... [TRUNCATED] 
-
-> # Combine panels
-> figure_3 <- (panel_a | panel_b) / (panel_c | panel_d) +
-+   plot_layout(guides = "collect") +
-+   plot_annotation(
-+     title =  .... [TRUNCATED] 
-
-> # Display and save
-> print(figure_3)
-`geom_smooth()` using formula = 'y ~ x'
-`geom_smooth()` using formula = 'y ~ x'
-
-> ggsave("results/figures/Figure3_context_dependent_immune.pdf",
-+        figure_3, width = 12, height = 10, dpi = 300)
-`geom_smooth()` using formula = 'y ~ x'
-`geom_smooth()` using formula = 'y ~ x'
-There were 14 warnings (use warnings() to see them)
-source("~/GitHub/hybrid_males_suffer_more/scripts/03_statistical_models/08_immune_whatever.R", echo = TRUE)
-
-> cat("\n")
-
-
-> print_section("COMPLETE DATASET MULTIVARIATE ANALYSIS")
-
- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-COMPLETE DATASET MULTIVARIATE ANALYSIS 
-= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-
-
-> cat("Including infection status as a key factor\n\n")
-Including infection status as a key factor
-
-
-> cat("1. PREPARING COMPLETE DATASET\n")
-1. PREPARING COMPLETE DATASET
-
-> cat("=============================\n")
-=============================
-
-> # Complete dataset is already in immune_data
-> cat("? Total mice: n =", nrow(immune_data), "\n")
-? Total mice: n = 304 
-
-> cat("? Infected:", sum(immune_data$infection_status == "Infected"), "\n")
-? Infected: 133 
-
-> cat("? Uninfected:", sum(immune_data$infection_status == "Uninfected"), "\n")
-? Uninfected: 171 
-
-> cat("? Females:", sum(immune_data$Sex == "F"), "\n")
-? Females: 151 
-
-> cat("? Males:", sum(immune_data$Sex == "M"), "\n\n")
-? Males: 153 
-
-
-> cat("2. PCA ON COMPLETE DATASET\n")
-2. PCA ON COMPLETE DATASET
-
-> cat("==========================\n")
-==========================
-
-> # Run PCA on all mice
-> pca_complete <- prcomp(immune_data[, immune_genes], scale. = TRUE, center = TRUE)
-
-> var_explained_complete <- round(100 * pca_complete$sdev^2 / sum(pca_complete$sdev^2), 1)
-
-> # Add PC scores
-> immune_data$PC1 <- pca_complete$x[,1]
-
-> immune_data$PC2 <- pca_complete$x[,2]
-
-> immune_data$PC3 <- pca_complete$x[,3]
-
-> cat("PC1 explains:", var_explained_complete[1], "% of variance\n")
-PC1 explains: 43.8 % of variance
-
-> cat("PC2 explains:", var_explained_complete[2], "% of variance\n")
-PC2 explains: 11 % of variance
-
-> cat("PC3 explains:", var_explained_complete[3], "% of variance\n\n")
-PC3 explains: 9.7 % of variance
-
-
-> # Test for Sex × HI × Infection interactions
-> cat("Testing 3-way interactions on PC scores:\n")
-Testing 3-way interactions on PC scores:
-
-> cat("=========================================\n")
-=========================================
-
-> for(pc in c("PC1", "PC2", "PC3")) {
-+   # Full model with 3-way interaction
-+   full_model <- lm(as.formula(paste(pc, "~ Sex * poly(HI, 2) * infecti ..." ... [TRUNCATED] 
-
- PC1 results:
-  Sex × HI × Infection p = 0.7821 
-  Sex × HI p = 0.7902 
-  Sex × Infection p = 0.6918 
-  HI × Infection p = 0.1656 
-
- PC2 results:
-  Sex × HI × Infection p = 0.3643 
-  Sex × HI p = 0.03583 
-  Sex × Infection p = 0.567 
-  HI × Infection p = 0.3657 
-
- PC3 results:
-  Sex × HI × Infection p = 0.3497 
-  Sex × HI p = 0.7875 
-  Sex × Infection p = 0.5306 
-  HI × Infection p = 0.1966 
-
-> cat("\n3. PERMANOVA WITH INFECTION STATUS\n")
-
-3. PERMANOVA WITH INFECTION STATUS
-
-> cat("==================================\n")
-==================================
-
-> # Full PERMANOVA
-> immune_matrix_complete <- as.matrix(immune_data[, immune_genes])
-
-> permanova_complete <- adonis2(
-+   immune_matrix_complete ~ Sex * HI * He * infection_status,
-+   data = immune_data,
-+   permutations = 999,
-+   me .... [TRUNCATED] 
-> cat("\n")
-
-> print_section("COMPLETE DATASET MULTIVARIATE ANALYSIS")
-
- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-COMPLETE DATASET MULTIVARIATE ANALYSIS 
-= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-
-> cat("Including infection status as a key factor\n\n")
-Including infection status as a key factor
-
-> cat("1. PREPARING COMPLETE DATASET\n")
-1. PREPARING COMPLETE DATASET
-> cat("=============================\n")
-=============================
-> # Complete dataset is already in immune_data
-> cat("? Total mice: n =", nrow(immune_data), "\n")
-? Total mice: n = 304 
-> cat("? Infected:", sum(immune_data$infection_status == "Infected"), "\n")
-? Infected: 133 
-> cat("? Uninfected:", sum(immune_data$infection_status == "Uninfected"), "\n")
-? Uninfected: 171 
-> cat("? Females:", sum(immune_data$Sex == "F"), "\n")
-? Females: 151 
-> cat("? Males:", sum(immune_data$Sex == "M"), "\n\n")
-? Males: 153 
-
-> cat("2. PCA ON COMPLETE DATASET\n")
-2. PCA ON COMPLETE DATASET
-> cat("==========================\n")
-==========================
-> # Run PCA on all mice
-> pca_complete <- prcomp(immune_data[, immune_genes], scale. = TRUE, center = TRUE)
-> var_explained_complete <- round(100 * pca_complete$sdev^2 / sum(pca_complete$sdev^2), 1)
-> # Add PC scores
-> immune_data$PC1 <- pca_complete$x[,1]
-> immune_data$PC2 <- pca_complete$x[,2]
-> immune_data$PC3 <- pca_complete$x[,3]
-> cat("PC1 explains:", var_explained_complete[1], "% of variance\n")
-PC1 explains: 43.8 % of variance
-> cat("PC2 explains:", var_explained_complete[2], "% of variance\n")
-PC2 explains: 11 % of variance
-> cat("PC3 explains:", var_explained_complete[3], "% of variance\n\n")
-PC3 explains: 9.7 % of variance
-
-> # Test for Sex × HI × Infection interactions
-> cat("Testing 3-way interactions on PC scores:\n")
-Testing 3-way interactions on PC scores:
-> cat("=========================================\n")
-=========================================
-> for(pc in c("PC1", "PC2", "PC3")) {
-+   # Full model with 3-way interaction
-+   full_model <- lm(as.formula(paste(pc, "~ Sex * poly(HI, 2) * infection_status")),
-+                    data = immune_data)
-+ 
-+   # Extract key p-values
-+   anova_result <- anova(full_model)
-+ 
-+   cat("\n", pc, "results:\n")
-+   cat("  Sex × HI × Infection p =",
-+       anova_result["Sex:poly(HI, 2):infection_status", "Pr(>F)"], "\n")
-+   cat("  Sex × HI p =",
-+       anova_result["Sex:poly(HI, 2)", "Pr(>F)"], "\n")
-+   cat("  Sex × Infection p =",
-+       anova_result["Sex:infection_status", "Pr(>F)"], "\n")
-+   cat("  HI × Infection p =",
-+       anova_result["poly(HI, 2):infection_status", "Pr(>F)"], "\n")
-+ }
-
- PC1 results:
-  Sex × HI × Infection p = 0.7821 
-  Sex × HI p = 0.7902 
-  Sex × Infection p = 0.6918 
-  HI × Infection p = 0.1656 
-
- PC2 results:
-  Sex × HI × Infection p = 0.3643 
-  Sex × HI p = 0.03583 
-  Sex × Infection p = 0.567 
-  HI × Infection p = 0.3657 
-
- PC3 results:
-  Sex × HI × Infection p = 0.3497 
-  Sex × HI p = 0.7875 
-  Sex × Infection p = 0.5306 
-  HI × Infection p = 0.1966 
-> cat("\n3. PERMANOVA WITH INFECTION STATUS\n")
-
-3. PERMANOVA WITH INFECTION STATUS
-> cat("==================================\n")
-==================================
-> # Full PERMANOVA
-> immune_matrix_complete <- as.matrix(immune_data[, immune_genes])
-> permanova_complete <- adonis2(
-+   immune_matrix_complete ~ Sex * HI * He * infection_status,
-+   data = immune_data,
-+   permutations = 999,
-+   method = "euclidean"
-+ )
-> cat("Complete PERMANOVA Results:\n")
-Complete PERMANOVA Results:
-> print(permanova_complete)
-Permutation test for adonis under reduced model
-Terms added sequentially (first to last)
-Permutation: free
-Number of permutations: 999
-
-adonis2(formula = immune_matrix_complete ~ Sex * HI * He * infection_status, data = immune_data, permutations = 999, method = "euclidean")
-                            Df SumOfSqs    R2    F Pr(>F)  
-Sex                          1      332 0.004 1.34  0.202  
-HI                           1      300 0.004 1.21  0.242  
-He                           1      242 0.003 0.98  0.386  
-infection_status             1      672 0.009 2.72  0.042 *
-Sex:HI                       1      248 0.003 1.00  0.364  
-Sex:He                       1      128 0.002 0.52  0.761  
-HI:He                        1      167 0.002 0.68  0.619  
-Sex:infection_status         1      125 0.002 0.50  0.795  
-HI:infection_status          1      436 0.006 1.77  0.121  
-He:infection_status          1      273 0.004 1.11  0.311  
-Sex:HI:He                    1      760 0.010 3.08  0.026 *
-Sex:HI:infection_status      1      187 0.002 0.76  0.552  
-Sex:He:infection_status      1      109 0.001 0.44  0.855  
-HI:He:infection_status       1      243 0.003 0.98  0.350  
-Sex:HI:He:infection_status   1      155 0.002 0.63  0.663  
-Residual                   288    71139 0.942              
-Total                      303    75515 1.000              
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-> # Also test simpler model focusing on key interactions
-> permanova_simple <- adonis2(
-+   immune_matrix_complete ~ Sex + HI + infection_status +
-+     Sex:HI + Sex:infection_status + HI:infection_status +
-+     Sex:HI:infection_status,
-+   data = immune_data,
-+   permutations = 999,
-+   method = "euclidean"
-+ )
-> cat("\nSimplified PERMANOVA (key interactions):\n")
-
-Simplified PERMANOVA (key interactions):
-> print(permanova_simple)
-Permutation test for adonis under reduced model
-Terms added sequentially (first to last)
-Permutation: free
-Number of permutations: 999
-
-adonis2(formula = immune_matrix_complete ~ Sex + HI + infection_status + Sex:HI + Sex:infection_status + HI:infection_status + Sex:HI:infection_status, data = immune_data, permutations = 999, method = "euclidean")
-                         Df SumOfSqs    R2    F Pr(>F)  
-Sex                       1      332 0.004 1.34  0.204  
-HI                        1      300 0.004 1.21  0.253  
-infection_status          1      683 0.009 2.76  0.027 *
-Sex:HI                    1      206 0.003 0.83  0.482  
-Sex:infection_status      1      114 0.002 0.46  0.828  
-HI:infection_status       1      442 0.006 1.78  0.110  
-Sex:HI:infection_status   1      172 0.002 0.69  0.602  
-Residual                296    73266 0.970              
-Total                   303    75515 1.000              
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-> cat("\n4. INFECTION-STRATIFIED NETWORK COHERENCE\n")
-
-4. INFECTION-STRATIFIED NETWORK COHERENCE
-> cat("=========================================\n")
-=========================================
-> # Calculate network coherence by group
-> coherence_by_group <- immune_data %>%
+> variance_results <- variance_results %>%
 +   mutate(
-+     HI_bin = cut(HI, breaks = c(0, 0.3, 0.7, 1),
-+                  labels = c("Low", "Mid", "High"),
-+                  include.lowest = TRUE)
-+   ) %>%
-+   group_by(Sex, infection_status, HI_bin) %>%
-+   summarise(
-+     n = n(),
-+     coherence = ifelse(n >= 5,
-+                        calculate_network_coherence(pick(everything()), immune_genes),
-+                        NA),
-+     .groups = "drop"
-+   ) %>%
-+   filter(!is.na(coherence))
-> # Plot coherence patterns
-> p_coherence <- ggplot(coherence_by_group,
-+                       aes(x = HI_bin, y = coherence,
-+                           color = Sex, linetype = infection_status)) +
-+   geom_point(size = 3) +
-+   geom_line(aes(group = interaction(Sex, infection_status)), size = 1) +
-+   scale_color_manual(values = c("F" = "#E69F00", "M" = "#56B4E9")) +
-+   labs(
-+     title = "Immune Network Coherence Across Groups",
-+     x = "Hybrid Index Category",
-+     y = "Network Coherence",
-+     color = "Sex",
-+     linetype = "Infection Status"
-+   ) +
-+   theme_minimal(base_size = 14) +
-+   theme(legend.position = "bottom")
-> ggsave("results/figures/network_coherence_complete.png",
-+        p_coherence, width = 10, height = 6, dpi = 300)
-> cat("\n5. MULTIVARIATE DISPERSION - COMPLETE DATA\n")
++     p_adjusted = p.adjust(p_value, method = "BH"),
++     significant = p_adjusted < 0.05
++    .... [TRUNCATED] 
 
-5. MULTIVARIATE DISPERSION - COMPLETE DATA
-> cat("==========================================\n")
-==========================================
-> # Test dispersion with all groups
-> dist_complete <- dist(scale(immune_matrix_complete))
-> groups_complete <- interaction(immune_data$Sex,
-+                                immune_data$infection_status,
-+                                immune_data$hybrid_category)
-Warning message:
-Unknown or uninitialised column: `hybrid_category`. > beta_disp_complete <- betadisper(dist_complete, groups_complete)
-Error in x - c : non-conformable arrays
-> cat("Multivariate Dispersion Test (all groups):\n")
-Multivariate Dispersion Test (all groups):
-> print(disp_test_complete)
-Error in h(simpleError(msg, call)) : 
-  error in evaluating the argument 'x' in selecting a method for function 'print': object 'disp_test_complete' not found
-> # Add distances to dataframe
-> immune_data$dist_to_centroid <- beta_disp_complete$distances
-Error: object 'beta_disp_complete' not found
-> # Model with infection interaction
-> disp_model_complete <- lm(dist_to_centroid ~ Sex * poly(HI, 2) * infection_status,
-+                           data = immune_data)
-Error in eval(predvars, data, env) : object 'dist_to_centroid' not found
-> cat("\nDispersion model with infection:\n")
+> cat("Genes with differential variance:", sum(variance_results$significant), "\n")
+Genes with differential variance: 0 
 
-Dispersion model with infection:
-> print(summary(disp_model_complete))
-Error in h(simpleError(msg, call)) : 
-  error in evaluating the argument 'x' in selecting a method for function 'print': error in evaluating the argument 'object' in selecting a method for function 'summary': object 'disp_model_complete' not found
-> cat("\n6. PREDICTED WEIGHT LOSS MODELS - COMPLETE DATA\n")
+> # C. Multivariate dispersion (betadisper)
+> cat("\nC. Multivariate dispersion analysis...\n")
 
-6. PREDICTED WEIGHT LOSS MODELS - COMPLETE DATA
-> cat("===============================================\n")
-===============================================
-> # Model 1: Main effects and 2-way interactions
-> model_2way <- lm(predicted_weight_loss ~ Sex * poly(HI, 2) +
-+                    Sex * infection_status +
-+                    poly(HI, 2) * infection_status,
-+                  data = immune_data)
-> # Model 2: Include 3-way interaction
-> model_3way <- lm(predicted_weight_loss ~ Sex * poly(HI, 2) * infection_status,
-+                  data = immune_data)
-> # Compare models
-> model_comparison <- anova(model_2way, model_3way)
-> cat("Model comparison (2-way vs 3-way interactions):\n")
-Model comparison (2-way vs 3-way interactions):
-> print(model_comparison)
-Analysis of Variance Table
+C. Multivariate dispersion analysis...
 
-Model 1: predicted_weight_loss ~ Sex * poly(HI, 2) + Sex * infection_status + 
-    poly(HI, 2) * infection_status
-Model 2: predicted_weight_loss ~ Sex * poly(HI, 2) * infection_status
-  Res.Df  RSS Df Sum of Sq    F Pr(>F)
-1    294 1696                         
-2    292 1684  2      12.1 1.05   0.35
-> cat("\nFull model summary:\n")
+> dist_matrix <- dist(scale(immune_matrix))
 
-Full model summary:
-> print(summary(model_3way))
+> groups <- interaction(immune_data$Sex, immune_data$infection, immune_data$hybrid_category)
+
+> beta_disp <- betadisper(dist_matrix, groups)
+
+> disp_test <- permutest(beta_disp, permutations = 999)
+
+> cat("Dispersion test results:\n")
+Dispersion test results:
+
+> print(disp_test)
+
+Permutation test for homogeneity of multivariate dispersions
+Permutation: free
+Number of permutations: 999
+
+Response: Distances
+           Df Sum Sq Mean Sq    F N.Perm Pr(>F)
+Groups      7     15    2.10 0.98    999   0.44
+Residuals 296    635    2.15                   
+
+> immune_data$dist_to_centroid <- beta_disp$distances
+
+> # Model dispersion
+> disp_model <- lm(dist_to_centroid ~ Sex * (HI + He) * infection, data = immune_data)
+
+> cat("\nDispersion model:\n")
+
+Dispersion model:
+
+> print(summary(disp_model))
 
 Call:
-lm(formula = predicted_weight_loss ~ Sex * poly(HI, 2) * infection_status, 
+lm(formula = dist_to_centroid ~ Sex * (HI + He) * infection, 
     data = immune_data)
 
 Residuals:
    Min     1Q Median     3Q    Max 
--6.356 -1.788 -0.151  1.532  9.364 
+-2.745 -1.048 -0.285  0.729  4.462 
 
 Coefficients:
-                                           Estimate Std. Error t value             Pr(>|t|)    
-(Intercept)                                  9.5058     0.2552   37.24 < 0.0000000000000002 ***
-SexM                                         0.0223     0.3724    0.06              0.95237    
-poly(HI, 2)1                                 0.3256     4.3468    0.07              0.94035    
-poly(HI, 2)2                                -2.5202     4.3164   -0.58              0.55976    
-infection_statusInfected                     1.3634     0.4090    3.33              0.00097 ***
-SexM:poly(HI, 2)1                           10.1319     6.4005    1.58              0.11451    
-SexM:poly(HI, 2)2                           -5.9404     6.3234   -0.94              0.34829    
-SexM:infection_statusInfected               -0.3735     0.5687   -0.66              0.51186    
-poly(HI, 2)1:infection_statusInfected      -13.8853     7.4331   -1.87              0.06276 .  
-poly(HI, 2)2:infection_statusInfected       -4.3254     7.1802   -0.60              0.54737    
-SexM:poly(HI, 2)1:infection_statusInfected   9.1062    10.3229    0.88              0.37843    
-SexM:poly(HI, 2)2:infection_statusInfected  11.4808    10.1025    1.14              0.25671    
+                          Estimate Std. Error t value             Pr(>|t|)    
+(Intercept)                  3.616      0.309   11.71 < 0.0000000000000002 ***
+SexM                        -0.276      0.519   -0.53              0.59572    
+HI                           0.793      0.447    1.77              0.07709 .  
+He                           0.377      1.085    0.35              0.72813    
+infectionInfected            1.994      0.598    3.34              0.00096 ***
+SexM:HI                     -0.352      0.632   -0.56              0.57829    
+SexM:He                      0.671      1.589    0.42              0.67325    
+SexM:infectionInfected      -0.707      0.884   -0.80              0.42437    
+HI:infectionInfected        -2.380      0.751   -3.17              0.00169 ** 
+He:infectionInfected        -1.505      1.804   -0.83              0.40486    
+SexM:HI:infectionInfected    0.979      1.021    0.96              0.33809    
+SexM:He:infectionInfected    0.655      2.539    0.26              0.79661    
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-Residual standard error: 2.4 on 292 degrees of freedom
-Multiple R-squared:  0.0984,	Adjusted R-squared:  0.0645 
-F-statistic:  2.9 on 11 and 292 DF,  p-value: 0.00122
+Residual standard error: 1.44 on 292 degrees of freedom
+Multiple R-squared:  0.0692,	Adjusted R-squared:  0.0341 
+F-statistic: 1.97 on 11 and 292 DF,  p-value: 0.0308
 
-> # Extract key interaction p-values
-> anova_3way <- anova(model_3way)
-> cat("\nKey interaction p-values:\n")
 
-Key interaction p-values:
-> cat("Sex × HI × Infection:",
-+     anova_3way["Sex:poly(HI, 2):infection_status", "Pr(>F)"], "\n")
-Sex × HI × Infection: 0.3502 
-> cat("\n7. VISUALIZING 3-WAY INTERACTIONS\n")
+> # D. MANOVA for trajectory differences
+> cat("\nD. MANOVA for UMAP trajectories...\n")
 
-7. VISUALIZING 3-WAY INTERACTIONS
-> cat("=================================\n")
-=================================
-> # Create prediction grid
-> pred_grid <- expand.grid(
-+   HI = seq(0, 1, 0.01),
-+   Sex = c("F", "M"),
-+   infection_status = c("Infected", "Uninfected")
-+ )
-> # Get predictions
-> pred_grid$predicted_weight_loss <- predict(model_3way, pred_grid)
-> pred_grid$PC1 <- predict(lm(PC1 ~ Sex * poly(HI, 2) * infection_status,
-+                             data = immune_data), pred_grid)
-> # Plot predicted weight loss
-> p_weight_3way <- ggplot(pred_grid, aes(x = HI, y = predicted_weight_loss,
-+                                        color = Sex, linetype = infection_status)) +
-+   geom_line(size = 1.5) +
-+   geom_point(data = immune_data,
-+              aes(x = HI, y = predicted_weight_loss, color = Sex,
-+                  shape = infection_status),
-+              alpha = 0.5) +
-+   scale_color_manual(values = c("F" = "#E69F00", "M" = "#56B4E9")) +
-+   facet_wrap(~infection_status) +
-+   labs(
-+     title = "Sex × HI × Infection Effects on Predicted Weight Loss",
-+     x = "Hybrid Index",
-+     y = "Predicted Weight Loss (%)",
-+     color = "Sex",
-+     shape = "Infection"
-+   ) +
-+   theme_minimal(base_size = 14) +
-+   theme(legend.position = "bottom")
-> # Plot PC1 patterns
-> p_pc1_3way <- ggplot(pred_grid, aes(x = HI, y = PC1,
-+                                     color = Sex, linetype = infection_status)) +
-+   geom_line(size = 1.5) +
-+   geom_point(data = immune_data,
-+              aes(x = HI, y = PC1, color = Sex, shape = infection_status),
-+              alpha = 0.5) +
-+   scale_color_manual(values = c("F" = "#E69F00", "M" = "#56B4E9")) +
-+   facet_wrap(~infection_status) +
-+   labs(
-+     title = "Sex × HI × Infection Effects on Immune PC1",
-+     x = "Hybrid Index",
-+     y = "PC1 Score",
-+     color = "Sex",
-+     shape = "Infection"
-+   ) +
-+   theme_minimal(base_size = 14) +
-+   theme(legend.position = "bottom")
-> # Save plots
-> ggsave("results/figures/weight_loss_3way_interaction.png",
-+        p_weight_3way, width = 12, height = 6, dpi = 300)
-> ggsave("results/figures/pc1_3way_interaction.png",
-+        p_pc1_3way, width = 12, height = 6, dpi = 300)
-> cat("\n8. SUMMARY OF COMPLETE DATASET ANALYSIS\n")
+D. MANOVA for UMAP trajectories...
 
-8. SUMMARY OF COMPLETE DATASET ANALYSIS
-> cat("=======================================\n")
-=======================================
-> # Count significant effects
-> significant_effects <- list()
-> # Check PERMANOVA results
-> if(permanova_complete["Sex:HI:infection_status", "Pr(>F)"] < 0.05) {
-+   significant_effects$permanova_3way <- TRUE
-+ }
-> # Check PC models
-> if(anova(lm(PC1 ~ Sex * poly(HI, 2) * infection_status, data = immune_data))["Sex:poly(HI, 2):infection_status", "Pr(>F)"] < 0.05) {
-+   significant_effects$pc1_3way <- TRUE
-+ }
-> # Check weight loss model
-> if(anova_3way["Sex:poly(HI, 2):infection_status", "Pr(>F)"] < 0.05) {
-+   significant_effects$weight_3way <- TRUE
-+ }
-> cat("\nSIGNIFICANT FINDINGS (p < 0.05):\n")
+> manova_result <- manova(cbind(UMAP1, UMAP2) ~ Sex * HI * He * infection,
++                         data = immune_data)
 
-SIGNIFICANT FINDINGS (p < 0.05):
-> cat("---------------------------------\n")
----------------------------------
-> if(length(significant_effects) > 0) {
-+   for(effect in names(significant_effects)) {
-+     cat("?", effect, "\n")
-+   }
-+ } else {
-+   cat("No significant 3-way interactions found\n")
-+ }
-No significant 3-way interactions found
-> # Report main effects and 2-way interactions
-> cat("\nMAIN EFFECTS AND 2-WAY INTERACTIONS:\n")
+> cat("MANOVA Results:\n")
+MANOVA Results:
 
-MAIN EFFECTS AND 2-WAY INTERACTIONS:
-> cat("------------------------------------\n")
-------------------------------------
-> # Extract from PERMANOVA
-> cat("PERMANOVA results:\n")
-PERMANOVA results:
-> cat("  Infection main effect: p =",
-+     permanova_complete["infection_status", "Pr(>F)"], "\n")
-  Infection main effect: p = 0.042 
-> cat("  HI × Infection: p =",
-+     permanova_complete["HI:infection_status", "Pr(>F)"], "\n")
-  HI × Infection: p = 0.121 
-> cat("  Sex × Infection: p =",
-+     permanova_complete["Sex:infection_status", "Pr(>F)"], "\n")
-  Sex × Infection: p = 0.795 
-> # Save complete analysis results
-> complete_results <- list(
-+   pca = list(
-+     result = pca_complete,
-+     var_explained = var_explained_complete
-+   ),
-+   permanova = list(
-+     full = permanova_complete,
-+     simple = permanova_simple
-+   ),
-+   coherence = coherence_by_group,
-+   dispersion = list(
-+     test = disp_test_complete,
-+     model = disp_model_complete
-+   ),
-+   weight_loss_models = list(
-+     two_way = model_2way,
-+     three_way = model_3way,
-+     comparison = model_comparison
-+   )
-+ )
-Error: object 'disp_test_complete' not found
+> print(summary(manova_result, test = "Pillai"))
+                     Df  Pillai approx F num Df den Df Pr(>F)  
+Sex                   1 0.00754    1.090      2    287  0.338  
+HI                    1 0.01918    2.806      2    287  0.062 .
+He                    1 0.00411    0.593      2    287  0.553  
+infection             1 0.02029    2.973      2    287  0.053 .
+Sex:HI                1 0.00243    0.349      2    287  0.706  
+Sex:He                1 0.00015    0.021      2    287  0.979  
+HI:He                 1 0.00264    0.379      2    287  0.685  
+Sex:infection         1 0.00213    0.306      2    287  0.736  
+HI:infection          1 0.01115    1.619      2    287  0.200  
+He:infection          1 0.00669    0.967      2    287  0.381  
+Sex:HI:He             1 0.01570    2.289      2    287  0.103  
+Sex:HI:infection      1 0.00437    0.629      2    287  0.534  
+Sex:He:infection      1 0.00001    0.002      2    287  0.998  
+HI:He:infection       1 0.00150    0.216      2    287  0.806  
+Sex:HI:He:infection   1 0.00371    0.534      2    287  0.587  
+Residuals           288                                        
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+> ##################
+> cat("\n\nENHANCED UMAP ANALYSIS: HYBRID TRAJECTORIES\n")
+
+
+ENHANCED UMAP ANALYSIS: HYBRID TRAJECTORIES
+
+> cat("============================================\n")
+============================================
+
+> # 1. Create trajectory data for UMAP space
+> trajectory_data <- immune_data %>%
++   mutate(HI_bin = cut(HI, breaks = seq(0, 1, by = 0.2),
++          .... [TRUNCATED] 
+
+> # 2. UMAP with hybrid trajectories by sex and infection
+> plot_umap_trajectories <- ggplot() +
++   # Individual points in background
++   geom_point( .... [TRUNCATED] 
+
+> # Add arrows to show direction
+> for(s in c("F", "M")) {
++   for(inf in c("Uninfected", "Infected")) {
++     traj_subset <- trajectory_data %>%
++    .... [TRUNCATED] 
+
+> print(plot_umap_trajectories)
+
+> save_plot_all_formats(plot_umap_trajectories, "UMAP_hybrid_trajectories")
+? Saved UMAP_hybrid_trajectories as PDF
+? Saved UMAP_hybrid_trajectories as JPEG
+? All formats saved in folder: results/figures/UMAP_hybrid_trajectories 
+
+
+> # 3. UMAP colored by weight loss with trajectory overlay
+> plot_umap_weight_trajectory <- ggplot() +
++   # Points colored by weight loss
++   geom_po .... [TRUNCATED] 
+
+> print(plot_umap_weight_trajectory)
+
+> save_plot_all_formats(plot_umap_weight_trajectory, "UMAP_weight_loss_trajectories")
+? Saved UMAP_weight_loss_trajectories as PDF
+? Saved UMAP_weight_loss_trajectories as JPEG
+? All formats saved in folder: results/figures/UMAP_weight_loss_trajectories 
+
+
+> # 4. Statistical test of trajectory differences
+> cat("\nTesting trajectory differences between sexes:\n")
+
+Testing trajectory differences between sexes:
+
+> cat("=============================================\n")
+=============================================
+
+> # Calculate trajectory length for each sex/infection combination
+> trajectory_lengths <- trajectory_data %>%
++   arrange(Sex, infection, mean_HI) %> .... [TRUNCATED] 
+
+> cat("\nTrajectory lengths:\n")
+
+Trajectory lengths:
+
+> print(trajectory_lengths)
+# A tibble: 4 × 4
+  Sex   infection  total_length n_segments
+  <fct> <fct>             <dbl>      <int>
+1 F     Uninfected         5.68          4
+2 F     Infected           5.67          4
+3 M     Uninfected         4.08          3
+4 M     Infected           2.59          3
+
+> # 5. Test if trajectories differ in direction
+> # Using angle analysis
+> trajectory_angles <- trajectory_data %>%
++   arrange(Sex, infection, mean_H .... [TRUNCATED] 
+
+> # Circular statistics for angle differences
+> library(circular)
+
+> angle_summary <- trajectory_angles %>%
++   group_by(Sex, infection) %>%
++   summarise(
++     mean_angle = mean.circular(circular(angle, units = "deg ..." ... [TRUNCATED] 
+
+> cat("\nTrajectory directions (mean angles):\n")
+
+Trajectory directions (mean angles):
+
+> print(angle_summary)
+# A tibble: 4 × 5
+  Sex   infection  mean_angle var_angle n_angles
+  <fct> <fct>      <circular>     <dbl>    <int>
+1 F     Uninfected -119.83        0.588        4
+2 F     Infected     94.89        0.615        4
+3 M     Uninfected   82.48        0.667        3
+4 M     Infected    103.68        0.694        3
+
+> # 6. Quantify divergence between male and female trajectories
+> divergence_data <- trajectory_data %>%
++   dplyr::select(infection, HI_bin, Sex, mea .... [TRUNCATED] 
+
+> plot_divergence <- ggplot(divergence_data,
++                           aes(x = HI_bin, y = divergence,
++                               fill = infect .... [TRUNCATED] 
+
+> print(plot_divergence)
+
+> save_plot_all_formats(plot_divergence, "UMAP_sex_divergence")
+? Saved UMAP_sex_divergence as PDF
+? Saved UMAP_sex_divergence as JPEG
+? All formats saved in folder: results/figures/UMAP_sex_divergence 
+
+
+> # 7. Summary statistics
+> cat("\n\nSUMMARY OF TRAJECTORY ANALYSIS:\n")
+
+
+SUMMARY OF TRAJECTORY ANALYSIS:
+
+> cat("================================\n")
+================================
+
+> # Test if divergence increases with HI
+> divergence_model <- lm(divergence ~ as.numeric(HI_bin) * infection,
++                        data = diverge .... [TRUNCATED] 
+
+> cat("\nDivergence model:\n")
+
+Divergence model:
+
+> print(summary(divergence_model))
+
+Call:
+lm(formula = divergence ~ as.numeric(HI_bin) * infection, data = divergence_data)
+
+Residuals:
+     1      2      3      4      5      6      7      8 
+-0.473  0.585  0.137 -0.249 -0.580  0.666  0.323 -0.408 
+
+Coefficients:
+                                     Estimate Std. Error t value Pr(>|t|)
+(Intercept)                            1.3591     0.6987    1.95     0.12
+as.numeric(HI_bin)                    -0.0769     0.2060   -0.37     0.73
+infectionInfected                     -0.1338     0.9880   -0.14     0.90
+as.numeric(HI_bin):infectionInfected  -0.0145     0.2914   -0.05     0.96
+
+Residual standard error: 0.652 on 4 degrees of freedom
+Multiple R-squared:  0.108,	Adjusted R-squared:  -0.561 
+F-statistic: 0.161 on 3 and 4 DF,  p-value: 0.917
+
+
+> # Report key findings
+> max_divergence <- divergence_data %>%
++   group_by(infection) %>%
++   slice_max(divergence) %>%
++   ungroup()
+
+> cat("\nMaximum sex divergence:\n")
+
+Maximum sex divergence:
+
+> print(max_divergence)
+# A tibble: 2 × 7
+  infection  HI_bin  mean_UMAP1_F mean_UMAP1_M mean_UMAP2_F mean_UMAP2_M divergence
+  <fct>      <fct>          <dbl>        <dbl>        <dbl>        <dbl>      <dbl>
+1 Uninfected 0.2-0.4       -0.562        0.251      -0.331          1.26       1.79
+2 Infected   0.2-0.4        1.05         0.163      -0.0638        -1.53       1.71
+
+> cat("\n? Enhanced UMAP analysis complete!\n")
+
+? Enhanced UMAP analysis complete!
+
+> cat("Key findings:\n")
+Key findings:
+
+> cat("- Sex-specific trajectories visualized in immune space\n")
+- Sex-specific trajectories visualized in immune space
+
+> cat("- Divergence patterns quantified along hybrid gradient\n")
+- Divergence patterns quantified along hybrid gradient
+
+> cat("- Weight loss landscape mapped to immune trajectories\n")
+- Weight loss landscape mapped to immune trajectories
+
+> # ==============================================================================
+> # 9. CREATE SUMMARY TABLES
+> # ================================== .... [TRUNCATED] 
+
+9. CREATING SUMMARY TABLES
+
+> cat("=========================\n")
+=========================
+
+> # Table 1: Model comparison
+> model_table <- model_comparison %>%
++   gt() %>%
++   tab_header(
++     title = "Model Comparison for Predicted Weight  ..." ... [TRUNCATED] 
+
+> save_table_all_formats(model_table, "model_comparison")
+? Saved model_comparison as HTML
+? Saved model_comparison as DOCX
+file:///C:/Users/fay_w/AppData/Local/Temp/RtmpcbV38j/file3fa458c41887.html screenshot completed
+? Saved model_comparison as PNG
+file:///C:/Users/fay_w/AppData/Local/Temp/RtmpcbV38j/file3fa417eb5c26.html screenshot completed
+? Saved model_comparison as PDF
+? Saved model_comparison as TEX
+? All formats saved in folder: results/tables/model_comparison 
+
+
+> pathway_table <- pathway_results %>%
++   dplyr::select(Pathway, Sex_HI_padj, Sex_He_padj, HI_He_padj,
++                 Sex_infection_padj, R_square .... [TRUNCATED] 
+
+> save_table_all_formats(pathway_table, "pathway_interactions")
+? Saved pathway_interactions as HTML
+? Saved pathway_interactions as DOCX
+file:///C:/Users/fay_w/AppData/Local/Temp/RtmpcbV38j/file3fa4721331e7
 
