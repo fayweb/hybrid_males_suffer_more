@@ -143,7 +143,7 @@ cat("\n5. CREATING VISUALIZATION\n")
 cat("=========================\n")
 
 # Create plot showing sex differences in infected mice
-p_infected_sex <- ggplot(infected_data, aes(x = HI, y = response, color = Sex)) +
+p_infected_sex <- ggplot(infected_data, aes(x = HE, y = response, color = Sex)) +
   geom_point(alpha = 0.6, size = 2) +
   geom_smooth(method = "lm", se = TRUE, alpha = 0.3) +
   scale_color_manual(values = c("Female" = "#4daf4a", "Male" = "#ff7f00")) +

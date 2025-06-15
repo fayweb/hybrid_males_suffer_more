@@ -20,6 +20,11 @@ if (!exists("field_mice")) {
 cat("=== CREATING FIGURE 1: DATA OVERVIEW ===\n")
 cat("Dataset: field_mice (n =", nrow(field_mice), ")\n\n")
 
+sex_colors <- c(
+  "Female" = "#4daf4a",   # Green
+  "Male"   = "#ff7f00"    # Orange
+)
+
 # ==============================================================================
 # 1. EXAMINE KEY VARIABLES
 # ==============================================================================
@@ -192,7 +197,7 @@ panel_c <- ggplot(final_data_summary, aes(x = Sex, y = n, fill = Sex)) +
   geom_col(width = 0.6, alpha = 0.7, color = "black") +
   geom_text(aes(label = n), vjust = -0.6, size = 4, fontface = "bold") +
   facet_wrap(~infection_status) +
-  scale_fill_manual(values = sex_colors, name = NULL) +
+  scale_fill_manual( values = sex_colors, name = NULL) +
   labs(
    # title = paste0("C) Final Analysis Dataset (n = ", sum(final_data_summary$n), ")"),
     x = NULL,
@@ -227,6 +232,8 @@ infection_status_sex <-
     axis.title.y = element_text(size = 13),
     strip.text = element_text(size = 12)
   )
+
+infection_status_sex
 
 save_plot_all_formats(panel_c, plot_name = "Infection_status_sex_distribution")
 

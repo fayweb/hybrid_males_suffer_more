@@ -68,6 +68,7 @@ required_packages <- c(
   "lme4",           # Mixed-effects models
   "performance",    # Model diagnostics
   "emmeans",
+  "umap", # Computes a manifold approximation and projection
 
   # Multivariate analysis
   "FactoMineR",     # PCA analysis
@@ -203,8 +204,6 @@ infection_status_colors <- c(
 )
 
 
-
-
 infection_factors <- c("Uninfected",
                      "E. ferrisi",
                      "E. falciformis")
@@ -300,6 +299,14 @@ if (RUN_ANALYSIS$data_loading) {
   }
 }
 
+# create factors
+field_mice$Sex <- as.factor(field_mice$Sex)
+
+sex_colors <- c(
+  "F" = "#4daf4a",   # Green
+  "M"   = "#ff7f00"    # Orange
+)
+
 # 2. EXPLORATORY ANALYSIS
 if (RUN_ANALYSIS$exploratory_analysis) {
   print_section("EXPLORATORY ANALYSIS")
@@ -316,7 +323,7 @@ if (RUN_ANALYSIS$exploratory_analysis) {
 
 # Run distribution analysis
 cat("Running distribution analysis...\n")
-source(file.path("scripts", "02_exploratory_analysis", "02_distribution_analysis.R"))
+#source(file.path("scripts", "02_exploratory_analysis", "02_distribution_analysis.R"))
 cat("✓ Distribution analysis completed\n")
 cat("✓ Supplementary Figure 1 panels created and saved\n\n")
 
