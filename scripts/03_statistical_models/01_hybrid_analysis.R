@@ -145,6 +145,18 @@ cat("✓ Infection dominance analysis finished\n\n")
 
 
 
+# just testing infection dominance with males only
+
+male_data <- hybrid_data %>%
+  filter(Sex == "Male")
+
+male_infection_model <-   analyse(
+    data = male_data,
+    response = "response",
+    model = "student",
+    group = "infection_group",  # Compare infected vs uninfected
+    hybridIndex = "HI"
+  )
 
 # ==============================================================================
 # 5. INFECTED-ONLY ANALYSIS: Infection-Specific Hybrid Costs
