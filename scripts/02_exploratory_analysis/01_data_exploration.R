@@ -17,6 +17,9 @@ if (!exists("field_mice")) {
   stop("Please run 00_master_script.R first to load data and packages")
 }
 
+field_mice <- field_mice %>%
+  drop_na(HI)
+
 cat("=== CREATING FIGURE 1: DATA OVERVIEW ===\n")
 cat("Dataset: field_mice (n =", nrow(field_mice), ")\n\n")
 
@@ -47,6 +50,50 @@ print(table(field_mice$MC.Eimeria, useNA = "ifany"))
 
 cat("\nEimeria species:\n")
 print(table(field_mice$species_Eimeria, useNA = "ifany"))
+
+
+# Extract unique sampling locations with coordinates
+sampling_locations <- field_mice %>%
+  dplyr::select(Longitude, Latitude) %>%
+  distinct() %>%
+  arrange(Longitude, Latitude)
+
+# Get the number of unique locations
+n_locations <- nrow(sampling_locations)
+
+# Extract temporal information
+sampling_dates <- field_mice %>%
+  dplyr::select(Year, Trap_Date, Dissection_Date) %>%
+  mutate(
+    Trap_Date = as.Date(Trap_Date),
+    Dissection_Date = as.Date(Dissection_Date)
+  )
+
+# Get sampling year range
+year_range <- range(field_mice$Year, na.rm = TRUE)
+
+# Get precise date ranges for trapping
+trap_date_range <- field_mice %>%
+  filter(!is.na(Trap_Date)) %>%
+  summarise(
+    earliest_trap = min(as.Date(Trap_Date), na.rm = TRUE),
+    latest_trap = max(as.Date(Trap_Date), na.rm = TRUE)
+  )
+
+# Calculate geographic extent
+geographic_extent <- field_mice %>%
+  summarise(
+    lat_min = min(Latitude, na.rm = TRUE),
+    lat_max = max(Latitude, na.rm = TRUE),
+    lon_min = min(Longitude, na.rm = TRUE),
+    lon_max = max(Longitude, na.rm = TRUE)
+  )
+
+# Print results for methods section
+cat("Number of unique sampling locations:", n_locations, "\n")
+cat("Sampling years:", year_range[1], "-", year_range[2], "\n")
+cat("Latitude range:", geographic_extent$lat_min, "-", geographic_extent$lat_max, "\n")
+cat("Longitude range:", geographic_extent$lon_min, "-", geographic_extent$lon_max, "\n")
 
 # ==============================================================================
 # 2. DATA COMPLETENESS FOR HYBRID ANALYSIS
@@ -88,10 +135,12 @@ number_hybrids <-
   geom_rug(aes(color = HI), sides = "b", alpha = 0.8, size = 1) +
   geom_vline(xintercept = 0.5, linetype = "dashed", size = 1) +
   scale_color_gradientn(
-    colors = c("blue", "purple", "red"),
+    colors = c("blue", "#F7F7F7", "red"),
     values = scales::rescale(c(0, 0.5, 1)),
-    name = "Hybrid Index"
-  ) +
+    name = "Hybrid Index",
+    breaks = c(0, 0.25, 0.5, 0.75, 1),
+    labels = c("0 (domesticus)", "", "0.5 (hybrid)", "", "1 (musculus)")
+  )+
   annotate("text", x = 0.05, y = Inf, label = "M.m.domesticus",
            color = "blue", size = 4, vjust = 2, hjust = 0, fontface = "italic") +
   annotate("text", x = 0.95, y = Inf, label = "M.m.musculus",
@@ -119,7 +168,7 @@ hybridization_gradient <-
   geom_jitter(height = 0.05, width = 0.01, alpha = 0.7, size = 2) +
   geom_vline(xintercept = 0.5, linetype = "dashed", color = "black", size = 1) +
   scale_color_gradientn(
-    colors = c("blue", "purple", "red"),
+    colors = c("blue", "white", "red"),
     values = scales::rescale(c(0, 0.5, 1)),
     name = "Hybrid Index"
   ) +
@@ -269,6 +318,114 @@ panel_d <- field_mice %>%
 print(panel_d)
 
 save_plot_all_formats(panel_d, plot_name = "Sex_impact_Eimeria")
+
+# Colors
+sex_colors <- c("Female" = "#4DAF4A", "Male" = "#FF7F00")
+
+# Prepare dataset
+plot_data <- field_mice %>%
+  filter(!is.na(predicted_weight_loss), !is.na(infection_status)) %>%
+  mutate(
+    Sex = factor(Sex, levels = c("F", "M"), labels = c("Female", "Male")),
+    infection_status = factor(infection_status, levels = c("FALSE", "TRUE"),
+                              labels = c("Uninfected", "Infected")),
+    group = paste(Sex, infection_status, sep = " - ")
+  )
+
+# Reorder
+plot_data$group <- factor(plot_data$group,
+                          levels = c("Female - Uninfected", "Male - Uninfected",
+                                     "Female - Infected", "Male - Infected")
+)
+
+# Sample size labels
+group_counts <- plot_data %>%
+  count(group) %>%
+  mutate(label = paste0("n = ", n))
+
+# Global infection test (ignoring sex)
+plot_data_infection <- plot_data %>%
+  mutate(infection_only = ifelse(grepl("Uninfected", group), "Uninfected", "Infected"))
+
+infection_ttest <- t.test(predicted_weight_loss ~ infection_only, data = plot_data_infection)
+
+# Re-calculate global p as expression
+global_p_expr <- bquote(italic("Infected vs Uninfected:") ~ "p" == .(global_p))
+
+# Adjusted plot
+figure_1c <- ggplot(plot_data, aes(x = group, y = predicted_weight_loss, fill = Sex)) +
+  geom_boxplot(alpha = 0.7, outlier.shape = NA, width = 0.55, color = "black") +
+  geom_jitter(width = 0.15, size = 1.2, alpha = 0.5, shape = 21, stroke = 0.2, color = "black") +
+  geom_text(data = group_counts, aes(x = group, y = 22.5, label = label),
+            inherit.aes = FALSE, size = 3.8, fontface = "bold") +
+
+  # P-values between sexes within infection groups
+  stat_compare_means(
+    method = "t.test",
+    comparisons = list(
+      c("Female - Uninfected", "Male - Uninfected"),
+      c("Female - Infected", "Male - Infected")
+    ),
+    label = "p.format",
+    tip.length = 0.01,
+    size = 4,
+    label.y = c(24.5, 25.7)  # moved higher
+  ) +
+
+  # Add global test as subtitle instead of annotation above plot
+  labs(
+    x = NULL,
+    y = "Predicted weight loss (%)",
+    fill = "Sex",
+    subtitle = as.expression(global_p_expr)
+  ) +
+
+  scale_fill_manual(values = sex_colors) +
+  scale_y_continuous(limits = c(5, 27), expand = expansion(mult = c(0.05, 0.1))) +
+  theme_classic(base_size = 13) +
+  theme(
+    axis.text.x = element_text(angle = 20, hjust = 1, size = 11),
+    axis.title.y = element_text(size = 14),
+    legend.position = "none",
+    plot.subtitle = element_text(size = 13, face = "italic", hjust = 0.5),
+    plot.title = element_text(size = 14, face = "bold")
+  )
+
+
+
+figure_1c
+save_plot_all_formats(figure_1c, plot_name = "Predicted_weight_loss_infection_sex")
+
+# Load effect size package
+library(effectsize)
+
+# Global infection effect
+cat("\n\n=== Global Infection Effect ===\n")
+infection_test <- t.test(predicted_weight_loss ~ infection_only, data = plot_data_infection)
+print(infection_test)
+infection_d <- cohens_d(predicted_weight_loss ~ infection_only, data = plot_data_infection)
+cat("Cohen's d:", round(infection_d$Cohens_d, 3), " [", round(infection_d$CI_low, 3), ", ", round(infection_d$CI_high, 3), "]\n")
+
+# Sex comparison within Uninfected
+cat("\n\n=== Sex Effect (Uninfected) ===\n")
+t_uninf <- t.test(
+  predicted_weight_loss ~ Sex,
+  data = filter(plot_data, infection_status == "Uninfected")
+)
+print(t_uninf)
+d_uninf <- cohens_d(predicted_weight_loss ~ Sex, data = filter(plot_data, infection_status == "Uninfected"))
+cat("Cohen's d:", round(d_uninf$Cohens_d, 3), " [", round(d_uninf$CI_low, 3), ", ", round(d_uninf$CI_high, 3), "]\n")
+
+# Sex comparison within Infected
+cat("\n\n=== Sex Effect (Infected) ===\n")
+t_inf <- t.test(
+  predicted_weight_loss ~ Sex,
+  data = filter(plot_data, infection_status == "Infected")
+)
+print(t_inf)
+d_inf <- cohens_d(predicted_weight_loss ~ Sex, data = filter(plot_data, infection_status == "Infected"))
+cat("Cohen's d:", round(d_inf$Cohens_d, 3), " [", round(d_inf$CI_low, 3), ", ", round(d_inf$CI_high, 3), "]\n")
+
 
 cat("\n\n4. TESTING SEX AND INFECTION EFFECTS ON PREDICTED WEIGHT LOSS\n")
 cat("===============================================================\n")
@@ -530,7 +687,7 @@ europe <- ne_countries(continent = "Europe", returnclass = "sf", scale = "medium
 # Custom color scale from blue (musculus) → purple (hybrid) → red (domesticus)
 hybrid_gradient <- scale_color_gradientn(
   name = "Hybrid Index",
-  colors = c("blue", "purple", "firebrick1"),
+  colors = c("blue", "white", "firebrick1"),
   values = scales::rescale(c(1, 0.5, 0)),  # musculus (1) to domesticus (0)
   limits = c(0, 1)
 )
@@ -540,7 +697,7 @@ ggplot() +
   geom_sf(data = sample_points, aes(color = HI), size = 2.5, alpha = 0.9) +
   scale_color_gradientn(
     name = "Hybrid Index",
-    colors = c("blue", "purple", "firebrick1"),
+    colors = c("blue", "white", "red"),
     values = scales::rescale(c(1, 0.5, 0)),  # musculus (1) → hybrid (0.5) → domesticus (0)
     limits = c(0, 1)
   ) +
@@ -568,12 +725,15 @@ sample_points_merc <- sample_points %>% st_transform(crs = 3857)
 hybrid_map <-
   ggplot() +
   annotation_map_tile(type = "osm") +  # Or use "cartolight", "cartodark", "stamenbw", "esri.topo"
-  geom_sf(data = sample_points_merc, aes(color = HI), size = 2.5, alpha = 0.9) +
-  scale_color_gradientn(
+  geom_sf(data = sample_points_merc, aes(fill = HI), shape = 21,
+          size = 3, color = "black", stroke = 0.25, alpha = 0.9) +
+  scale_fill_gradientn(
     name = "Hybrid Index",
-    colors = c("blue", "purple", "firebrick1"),
-    values = scales::rescale(c(1, 0.5, 0)),
-    limits = c(0, 1)
+    colors = c("blue", "white", "red"),
+    values = scales::rescale(c(0, 0.5, 1)),  # 0 = domesticus, 1 = musculus
+    limits = c(0, 1),
+    breaks = c(0, 0.25, 0.5, 0.75, 1),
+    labels = c("domesticus", "", "hybrid", "", "musculus")
   ) +
   annotation_scale(location = "bl", width_hint = 0.3) +
   annotation_north_arrow(location = "tl", which_north = "true",
@@ -590,7 +750,7 @@ save_plot_all_formats(hybrid_map, plot_name = "Hybrid_index_locations")
 # ==============================================================================
 # 6. SUMMARY
 # ==============================================================================
-
+table(field_mice$Sex, field_mice$infection_status, useNA = "ifany")
 cat("\n\n=== FIGURE 1 CREATION COMPLETE ===\n")
 cat("Created panels showing:\n")
 cat("A) Hybrid index distribution across the zone\n")
