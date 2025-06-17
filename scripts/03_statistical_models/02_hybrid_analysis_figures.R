@@ -9,18 +9,17 @@ cat("Using correct parasiteLoad bananaPlot() syntax...\n\n")
 # ===========================================================================
 # 1. COMPLETE DATASET PLOT
 # ===========================================================================
-# Create the hybrid gradient bar (reuse your working code)
-HIgradientBar <- ggplot(data.frame(hi = seq(0,1,0.0001)),
-                        aes(x=hi, y=1, fill = hi)) +
+HIgradientBar <- ggplot(data.frame(hi = seq(0, 1, 0.0001)),
+                        aes(x = hi, y = 1, fill = hi)) +
   geom_tile() +
-  scale_x_continuous(breaks=seq(0, 1, by=0.25),
-                     labels=c("0", "0.25", "0.5", "0.75", "1")) +
-  scale_fill_gradient(low = "blue", high = "red") +
+  scale_x_continuous(breaks = seq(0, 1, by = 0.25),
+                     labels = c("0", "0.25", "0.5", "0.75", "1")) +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0.5) +
   theme_void() +
   theme(legend.position = 'none',
         plot.margin = unit(c(0, 0, 0, 0), "cm"),
         axis.text.x = element_text(color = "black",
-                                   angle = 0, vjust = 0.5, hjust=0.5))
+                                   angle = 0, vjust = 0.5, hjust = 0.5))
 
 # Create the main banana plot using your working approach
 p1 <- bananaPlot(mod = complete_model$H3,
@@ -57,44 +56,6 @@ save_plot_all_formats_tight(plot_object = combined_p1, plot_name = "Hybrid_impac
 # ===========================================================================
 
 cat("Creating constitutive costs banana plot...\n")
-
-# Your exact pattern:
-p2 <- bananaPlot(mod = constitutive_model$H3,
-                 data = uninfected_data,
-                 response = "response",
-                 group = "Sex",
-                 cols = c("white", "white")) +
-  scale_fill_manual(values = sex_colors,
-                    name = "Sex") +
-  scale_color_manual(values = sex_colors,
-                     name = "Sex") +
-  theme_bw()  +
-  theme(legend.position = 'none',
-        #  legend.direction = "horizontal",
-        axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()) +
-  labs(y = "Predicted weight loss (%)\nImmune signature")
-
-print(p2)
-
-# Use patchwork to combine the plots without any space between them
-combined_p2 <- p2 / HIgradientBar +
-  plot_layout(heights = c(1, 0.1)) # Adjust the relative heights as needed
-
-# Print the combined plot
-print(combined_p2)
-
-save_plot_all_formats_tight(plot_object = combined_p2, plot_name = "Constitutive_costs_uninfected_only")
-
-cat("✓ Constitutive costs plot saved\n")
-
-# ===========================================================================
-# only uninfected mice
-# ===========================================================================
-
-cat("Creating constitutive costs banana plot...\n")
-
 # Your exact pattern:
 p2 <- bananaPlot(mod = constitutive_model$H3,
                  data = uninfected_data,
@@ -175,6 +136,39 @@ save_plot_all_formats_tight(plot_object = combined_p3, plot_name = "Infection_do
 cat("✓ Infection dominance plot saved with single legend\n")
 
 
+############################# Testing the infeted only
+
+cat("Creating constitutive costs banana plot...\n")
+# Your exact pattern:
+p4 <- bananaPlot(mod = infected_model$H3,
+                 data = infected_data,
+                 response = "response",
+                 group = "Sex",
+                 cols = c("white", "white")) +
+  scale_fill_manual(values = sex_colors,
+                    name = "Sex") +
+  scale_color_manual(values = sex_colors,
+                     name = "Sex") +
+  theme_bw()  +
+  theme(legend.position = 'none',
+        #  legend.direction = "horizontal",
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  labs(y = "Predicted weight loss (%)\nImmune signature")
+
+print(p4)
+
+# Use patchwork to combine the plots without any space between them
+combined_p4 <- p4 / HIgradientBar +
+  plot_layout(heights = c(1, 0.1)) # Adjust the relative heights as needed
+
+# Print the combined plot
+print(combined_p4)
+
+save_plot_all_formats_tight(plot_object = combined_p4, plot_name = "Hybrid_impact_infected")
+
+cat("✓ Constitutive costs plot saved\n")
 # ===========================================================================
 # 4. FINAL SUMMARY
 # ===========================================================================
