@@ -1,0 +1,23 @@
+\newlength\holdLTleft\newlength\holdLTright\setlength\holdLTleft{\LTleft}\relax\setlength\holdLTright{\LTright}\relax\setlength\LTleft{0.1\linewidth}
+\setlength\LTright{0.1\linewidth}\setlength{\LTpost}{0mm}
+\begin{longtable}{@{\extracolsep{\fill}}lccc}
+\caption*{
+{\large Linear regression models of predicted weight loss} \\ 
+{\small Model 1: Infection only; Model 2: Main effects; Model 3: Interaction}
+} \\ 
+\toprule
+ & Model 1 & Model 2 & Model 3 \\ 
+\midrule\addlinespace[2.5pt]
+Intercept & 9.08***\textsuperscript{\textit{1}} & 9.08*** & 9.85*** \\ 
+Infected & 1.26*** & 1.22*** & 0.78 \\ 
+Male & — & 0.40 & 0.82 \\ 
+Infected × Male & — & — & −0.81 \\ 
+ &  &  &  \\ 
+Model R² & 0.066 & 0.072 & 0.082 \\ 
+\bottomrule
+\end{longtable}
+\begin{minipage}{\linewidth}
+\textsuperscript{\textit{1}}*** P < 0.001\\
+\end{minipage}
+\setlength\LTleft{\holdLTleft}
+\setlength\LTright{\holdLTright}

@@ -1,0 +1,30 @@
+\begin{longtable}{llrrrlr}
+\caption*{
+{\large Table S2: Linear regression model outputs}
+} \\ 
+\toprule
+Model & Term & Coefficient & SE & t\_value & p\_value & R\_squared \\ 
+\midrule\addlinespace[2.5pt]
+\multicolumn{7}{l}{Predicted weight loss models} \\ 
+\midrule\addlinespace[2.5pt]
+\cellcolor[HTML]{F2F2F2}{Model 1: Infection only} & \cellcolor[HTML]{F2F2F2}{Intercept} & \cellcolor[HTML]{F2F2F2}{$9.08$} & \cellcolor[HTML]{F2F2F2}{$0.25$} & \cellcolor[HTML]{F2F2F2}{$36.50$} & \cellcolor[HTML]{F2F2F2}{<0.001} & \cellcolor[HTML]{F2F2F2}{$0.066$} \\ 
+ & Infected & $1.26$ & $0.35$ & $3.59$ & <0.001 &  \\ 
+ &  &  &  &  &  &  \\ 
+\cellcolor[HTML]{F2F2F2}{Model 2: Infection + Sex} & \cellcolor[HTML]{F2F2F2}{Intercept} & \cellcolor[HTML]{F2F2F2}{$9.08$} & \cellcolor[HTML]{F2F2F2}{$0.33$} & \cellcolor[HTML]{F2F2F2}{$27.80$} & \cellcolor[HTML]{F2F2F2}{<0.001} & \cellcolor[HTML]{F2F2F2}{$0.072$} \\ 
+ & Infected & $1.22$ & $0.35$ & $3.47$ & <0.001 &  \\ 
+ & Male & $0.40$ & $0.35$ & $1.13$ & 0.260 &  \\ 
+ &  &  &  &  &  &  \\ 
+\cellcolor[HTML]{F2F2F2}{Model 3: Infection × Sex} & \cellcolor[HTML]{F2F2F2}{Intercept} & \cellcolor[HTML]{F2F2F2}{$9.85$} & \cellcolor[HTML]{F2F2F2}{$0.39$} & \cellcolor[HTML]{F2F2F2}{$25.10$} & \cellcolor[HTML]{F2F2F2}{<0.001} & \cellcolor[HTML]{F2F2F2}{$0.082$} \\ 
+ & Infected & $0.78$ & $0.53$ & $1.47$ & 0.142 &  \\ 
+ & Male & $0.82$ & $0.51$ & $1.61$ & 0.109 &  \\ 
+ & Infected:Male & $-0.81$ & $0.71$ & $-1.15$ & 0.254 &  \\ 
+ &  &  &  &  &  &  \\ 
+\midrule\addlinespace[2.5pt]
+\multicolumn{7}{l}{Hybrid index \textasciitilde{} Infection status} \\ 
+\midrule\addlinespace[2.5pt]
+\cellcolor[HTML]{F2F2F2}{HI Model: Infection effect} & \cellcolor[HTML]{F2F2F2}{Intercept} & \cellcolor[HTML]{F2F2F2}{$0.47$} & \cellcolor[HTML]{F2F2F2}{$0.05$} & \cellcolor[HTML]{F2F2F2}{$9.75$} & \cellcolor[HTML]{F2F2F2}{<0.001} & \cellcolor[HTML]{F2F2F2}{$0.149$} \\ 
+ & Infected & $0.27$ & $0.05$ & $5.67$ & <0.001 &  \\ 
+ &  &  &  &  &  &  \\ 
+\bottomrule
+\end{longtable}
+
