@@ -28,7 +28,7 @@ cat("Available immune genes:", length(available_genes), "\n")
 
 # Create complete dataset with all interactions
 immune_data <- field_mice %>%
-  dplyr::select(Mouse_ID, HI, Sex, infection_status, predicted_weight_loss,
+  dplyr::select(Mouse_ID, HI, Sex, infection_status, predicted_weight_loss, species_Eimeria,
                 all_of(available_genes)) %>%
   filter(!is.na(HI) & !is.na(Sex) & !is.na(infection_status) &
            !is.na(predicted_weight_loss)) %>%
@@ -49,6 +49,11 @@ immune_data <- field_mice %>%
       TRUE ~ "Hybrid"
     )
   )
+
+immune_data$species_Eimeria <- factor(
+  immune_data$species_Eimeria,
+  levels = c("Uninfected", "E. ferrisi", "E. falciformis")
+)
 
 # Handle missing values in immune genes
 immune_data <- immune_data %>%
@@ -157,6 +162,13 @@ model5 <- lm(predicted_weight_loss ~ Sex * (HI + He) * infection + HI:He,
 
 summary(model5)
 
+# Model 3 updated: Two-way interactions using species_Eimeria instead of Sex and infection
+modele6 <- lm(predicted_weight_loss ~ species_Eimeria * HI * He,
+                     data = immune_data)
+
+summary(modele6)
+
+
 # Compare models
 cat("Model comparison (AIC):\n")
 model_comparison <- data.frame(
@@ -168,7 +180,7 @@ model_comparison <- data.frame(
 print(model_comparison %>% arrange(AIC))
 
 # Select best model
-best_model <- model2  # or choose based on AIC
+best_model <- model3  # or choose based on AIC
 cat("\nUsing focused model for further analysis\n")
 
 # ==============================================================================
@@ -264,7 +276,6 @@ plot_coefficients_3 <- ggplot(coef_data_3, aes(x = estimate, y = reorder(term, e
 plot_coefficients_3
 
 save_plot_all_formats(plot_coefficients_3, "weight_loss_coefficients_HI")
-
 
 # ==============================================================================
 # 5. PATHWAY ANALYSIS WITH INTERACTIONS
@@ -948,3 +959,4 @@ cat("\n✓ Analysis complete!\n")
 cat("All figures saved in results/figures/\n")
 cat("All tables saved in results/tables/\n")
 cat("Results saved to results/immune_analysis_complete.rds\n")
+
