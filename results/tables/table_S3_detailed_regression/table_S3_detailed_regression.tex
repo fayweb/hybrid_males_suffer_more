@@ -1,0 +1,45 @@
+\setlength{\LTpost}{0mm}
+\begin{longtable}{>{\raggedright\arraybackslash}p{200px}>{\raggedright\arraybackslash}p{180px}>{\centering\arraybackslash}p{120px}>{\centering\arraybackslash}p{60px}>{\centering\arraybackslash}p{100px}>{\raggedright\arraybackslash}p{120px}}
+\caption*{
+{\large } \\ 
+{\small Complete parameter estimates for models testing genetic and sex-specific effects on immune-predicted weight loss (n = 304)}
+} \\ 
+\toprule
+Model & Parameters & β & t & p & Model Info \\ 
+\midrule\addlinespace[2.5pt]
+\cellcolor[HTML]{E8EAF6}{\textbf{Model 1: Genetic baseline<br><span style='font-size:11px; font-style:italic'>R² = 0.019, F(3,300) = 1.94, p = 0.122, AIC = 1419</span>}} & \cellcolor[HTML]{E8EAF6}{\textbf{}} & \cellcolor[HTML]{E8EAF6}{\textbf{ ()}} & \cellcolor[HTML]{E8EAF6}{\textbf{}} & \cellcolor[HTML]{E8EAF6}{\textbf{}} & \cellcolor[HTML]{E8EAF6}{\textbf{Residual SE: 2.47}} \\ 
+ & Intercept & 9.570 (0.411) & 23.27 & <0.001*** &  \\ 
+ & HI\textsuperscript{\textit{1}} & -0.154 (0.666) & -0.23 & 0.818 &  \\ 
+ & He\textsuperscript{\textit{2}} & -0.392 (2.035) & -0.19 & 0.847 &  \\ 
+ & HI × He & 4.015 (3.436) & 1.17 & 0.244 &  \\ 
+ &  &  () &  &  & df: 300 \\ 
+\cellcolor[HTML]{E8EAF6}{\textbf{Model 2: Main effects<br><span style='font-size:11px; font-style:italic'>R² = 0.063, F(4,299) = 5.05, p < 0.001, AIC = 1407</span>}} & \cellcolor[HTML]{E8EAF6}{\textbf{}} & \cellcolor[HTML]{E8EAF6}{\textbf{ ()}} & \cellcolor[HTML]{E8EAF6}{\textbf{}} & \cellcolor[HTML]{E8EAF6}{\textbf{}} & \cellcolor[HTML]{E8EAF6}{\textbf{Residual SE: 2.42}} \\ 
+ & Intercept & 9.053 (0.372) & 24.35 & <0.001*** &  \\ 
+ & Sex (Male) & -0.090 (0.278) & -0.32 & 0.746 &  \\ 
+ & HI & 0.185 (0.406) & 0.46 & 0.649 &  \\ 
+ & He & 1.556 (1.014) & 1.53 & 0.126 &  \\ 
+ & Infection & \textcolor[HTML]{1976D2}{\textbf{1.125 (0.285)}} & \textcolor[HTML]{1976D2}{\textbf{3.94}} & \textcolor[HTML]{1976D2}{\textbf{<0.001***}} &  \\ 
+ &  &  () &  &  & df: 299 \\ 
+\cellcolor[HTML]{E8EAF6}{\textbf{Model 3: Two-way interactions<br><span style='font-size:11px; font-style:italic'>R² = 0.093, F(10,293) = 2.99, p = 0.001, AIC = 1409</span>}} & \cellcolor[HTML]{E8EAF6}{\textbf{}} & \cellcolor[HTML]{E8EAF6}{\textbf{ ()}} & \cellcolor[HTML]{E8EAF6}{\textbf{}} & \cellcolor[HTML]{E8EAF6}{\textbf{}} & \cellcolor[HTML]{E8EAF6}{\textbf{Residual SE: 2.40}} \\ 
+ & Intercept & 9.316 (0.514) & 18.14 & <0.001*** &  \\ 
+ & Sex (Male) & -1.308 (0.736) & -1.78 & 0.077. &  \\ 
+ & HI & -0.670 (0.828) & -0.81 & 0.419 &  \\ 
+ & He & 1.286 (2.379) & 0.54 & 0.589 &  \\ 
+ & Infection & \textcolor[HTML]{1976D2}{\textbf{2.320 (0.795)}} & \textcolor[HTML]{1976D2}{\textbf{2.92}} & \textcolor[HTML]{1976D2}{\textbf{0.004**}} &  \\ 
+ & Sex × HI & \textcolor[HTML]{1976D2}{\textbf{2.144 (0.833)\textsuperscript{\textit{3}}}} & \textcolor[HTML]{1976D2}{\textbf{2.57}} & \textcolor[HTML]{1976D2}{\textbf{0.011*}} &  \\ 
+ & Sex × He & 0.547 (2.076) & 0.26 & 0.793 &  \\ 
+ & Sex × Infection & -0.369 (0.571) & -0.65 & 0.519 &  \\ 
+ & HI × He & 1.692 (3.508) & 0.48 & 0.630 &  \\ 
+ & HI × Infection & -1.299 (0.841) & -1.55 & 0.123 &  \\ 
+ & He × Infection & -0.908 (2.095) & -0.43 & 0.665 &  \\ 
+ &  &  () &  &  & df: 293 \\ 
+\bottomrule
+\end{longtable}
+\begin{minipage}{\linewidth}
+\textsuperscript{\textit{1}}HI = Hybrid Index (0 = pure M. m. domesticus, 1 = pure M. m. musculus)\\
+\textsuperscript{\textit{2}}He = Expected heterozygosity = 2 × HI × (1 - HI), measuring genetic admixture\\
+\textsuperscript{\textit{3}}\\
+Significance codes: ***p \textless{} 0.001, **p \textless{} 0.01, *p \textless{} 0.05, . p \textless{} 0.1
+Models compared using likelihood ratio tests.\\
+\end{minipage}
+

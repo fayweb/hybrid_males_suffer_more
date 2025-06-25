@@ -1,0 +1,37 @@
+\newlength\holdLTleft\newlength\holdLTright\setlength\holdLTleft{\LTleft}\relax\setlength\holdLTright{\LTright}\relax\setlength\LTleft{0\linewidth}
+\setlength\LTright{0\linewidth}\setlength{\LTpost}{0mm}
+\begin{longtable}{@{\extracolsep{\fill}}lrrr}
+\caption*{
+{\large }
+} \\ 
+\toprule
+Statistical Test & Complete Dataset<br><em>(n = 304)</em><br><strong>A = Female, B = Male</strong> & Constitutive Costs<br><em>(n = 171, uninfected)</em><br><strong>A = Female, B = Male</strong> & Infection Dominance<br><em>(n = 304, by status)</em><br><strong>A = Uninfected, B = Infected</strong> \\ 
+\midrule\addlinespace[2.5pt]
+\multicolumn{4}{l}{Model Comparisons} \\ 
+\midrule\addlinespace[2.5pt]
+\cellcolor[HTML]{rgba(230,184,230,0.7)}{Model comparison: H1 vs H0} & \cellcolor[HTML]{rgba(230,184,230,0.7)}{0.07936.} & \cellcolor[HTML]{rgba(230,184,230,0.7)}{0.13830} & \cellcolor[HTML]{rgba(230,184,230,0.7)}{0.16200} \\ 
+\cellcolor[HTML]{rgba(184,212,230,0.7)}{Model comparison: H2 vs H0} & \cellcolor[HTML]{rgba(184,212,230,0.7)}{0.94510} & \cellcolor[HTML]{rgba(184,212,230,0.7)}{0.89830} & \cellcolor[HTML]{rgba(184,212,230,0.7)}{\textbf{0.00211**}} \\ 
+\cellcolor[HTML]{rgba(200,230,200,0.7)}{Model comparison: H3 vs H1} & \cellcolor[HTML]{rgba(200,230,200,0.7)}{0.33710} & \cellcolor[HTML]{rgba(200,230,200,0.7)}{0.75340} & \cellcolor[HTML]{rgba(200,230,200,0.7)}{\textbf{0.00348**}} \\ 
+\cellcolor[HTML]{rgba(200,230,200,0.7)}{Model comparison: H3 vs H2\textsuperscript{\textit{1}}} & \cellcolor[HTML]{rgba(200,230,200,0.7)}{\textbf{0.02668*}} & \cellcolor[HTML]{rgba(200,230,200,0.7)}{0.17300} & \cellcolor[HTML]{rgba(200,230,200,0.7)}{0.22850} \\ 
+\midrule\addlinespace[2.5pt]
+\multicolumn{4}{l}{Individual Hypothesis Tests} \\ 
+\midrule\addlinespace[2.5pt]
+\cellcolor[HTML]{rgba(255,212,163,0.7)}{H0: Overall hybrid effect (α ≠ 0)\textsuperscript{\textit{2}}} & \cellcolor[HTML]{rgba(255,212,163,0.7)}{\textbf{0.01742*}} & \cellcolor[HTML]{rgba(255,212,163,0.7)}{0.54460} & \cellcolor[HTML]{rgba(255,212,163,0.7)}{0.19800} \\ 
+\cellcolor[HTML]{rgba(230,184,230,0.7)}{H1: Group difference in hybrid effects} & \cellcolor[HTML]{rgba(230,184,230,0.7)}{0.05504.} & \cellcolor[HTML]{rgba(230,184,230,0.7)}{0.75400} & \cellcolor[HTML]{rgba(230,184,230,0.7)}{0.29360} \\ 
+\cellcolor[HTML]{rgba(184,212,230,0.7)}{H2: Group A-specific hybrid effect\textsuperscript{\textit{3}}} & \cellcolor[HTML]{rgba(184,212,230,0.7)}{0.18930} & \cellcolor[HTML]{rgba(184,212,230,0.7)}{0.90810} & \cellcolor[HTML]{rgba(184,212,230,0.7)}{0.54460} \\ 
+\cellcolor[HTML]{rgba(184,212,230,0.7)}{H2: Group B-specific hybrid effect\textsuperscript{\textit{4}}} & \cellcolor[HTML]{rgba(184,212,230,0.7)}{\textbf{0.03808*}} & \cellcolor[HTML]{rgba(184,212,230,0.7)}{0.43150} & \cellcolor[HTML]{rgba(184,212,230,0.7)}{0.29290} \\ 
+\cellcolor[HTML]{rgba(200,230,200,0.7)}{H3: Advanced Group A model} & \cellcolor[HTML]{rgba(200,230,200,0.7)}{0.20790} & \cellcolor[HTML]{rgba(200,230,200,0.7)}{0.90850} & \cellcolor[HTML]{rgba(200,230,200,0.7)}{0.75400} \\ 
+\cellcolor[HTML]{rgba(200,230,200,0.7)}{H3: Advanced Group B model} & \cellcolor[HTML]{rgba(200,230,200,0.7)}{0.05075.} & \cellcolor[HTML]{rgba(200,230,200,0.7)}{0.35280} & \cellcolor[HTML]{rgba(200,230,200,0.7)}{0.26320} \\ 
+\bottomrule
+\end{longtable}
+\begin{minipage}{\linewidth}
+Complete \& Constitutive: A = Female, B = Male | Infection: A = Uninfected, B = Infected with Eimeria spp.\\
+Significance: *** p < 0.001, ** p < 0.01, * p < 0.05, . p < 0.1 | Bold = p < 0.05\\
+Color scheme matches nested hypothesis structure: <span style='background-color: #FFD4A3; padding: 2px;'>H0</span> <span style='background-color: #E6B8E6; padding: 2px;'>H1</span> <span style='background-color: #B8D4E6; padding: 2px;'>H2</span> <span style='background-color: #C8E6C8; padding: 2px;'>H3</span>\\
+\textsuperscript{\textit{1}}Critical comparison for detecting group-specific effects (H3 vs H2)\\
+\textsuperscript{\textit{2}}α represents deviation from additivity (positive = increased costs with M. m. musculus ancestry)\\
+\textsuperscript{\textit{3}}Group A = Female (Complete/Constitutive) OR Uninfected (Infection analysis)\\
+\textsuperscript{\textit{4}}Group B = Male (Complete/Constitutive) OR Infected (Infection analysis) - Males show significant effect (p = 0.038*)\\
+\end{minipage}
+\setlength\LTleft{\holdLTleft}
+\setlength\LTright{\holdLTright}

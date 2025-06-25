@@ -1,0 +1,39 @@
+\setlength{\LTpost}{0mm}
+\begin{longtable}{>{\raggedright\arraybackslash}p{200px}>{\raggedright\arraybackslash}p{150px}>{\centering\arraybackslash}p{120px}>{\centering\arraybackslash}p{100px}>{\raggedright\arraybackslash}p{250px}}
+\caption*{
+{\large Table 2. Linear regression models testing genetic and sex-specific effects on immune-predicted weight loss} \\ 
+{\small Progressive model building from simple genetic effects to complex interactions}
+} \\ 
+\toprule
+Model & Predictors & β\textsuperscript{\textit{1}} & Model Fit & Interpretation \\ 
+\midrule\addlinespace[2.5pt]
+\cellcolor[HTML]{F0F0F0}{\textbf{Model 1: Genetic baseline}} & \cellcolor[HTML]{F0F0F0}{} & \cellcolor[HTML]{F0F0F0}{ } & \cellcolor[HTML]{F0F0F0}{R² = 0.019} & \cellcolor[HTML]{F0F0F0}{No simple genetic effect} \\ 
+ & HI & -0.15 (0.67) &  &  \\ 
+ & He & -0.39 (2.04) &  &  \\ 
+ & HI × He & 4.02 (3.44) & AIC = 1419 &  \\ 
+\cellcolor[HTML]{F0F0F0}{\textbf{Model 2: Main effects}} & \cellcolor[HTML]{F0F0F0}{} & \cellcolor[HTML]{F0F0F0}{ } & \cellcolor[HTML]{F0F0F0}{R² = 0.063} & \cellcolor[HTML]{F0F0F0}{Infection dominates} \\ 
+ & Sex (Male) & -0.09 (0.28) &  &  \\ 
+ & HI & 0.19 (0.41) &  &  \\ 
+ & He & 1.56 (1.01) &  &  \\ 
+ & Infection & \textbf{1.12 (0.29)***} & AIC = 1407 &  \\ 
+\cellcolor[HTML]{F0F0F0}{\textbf{Model 3: Two-way interactions}} & \cellcolor[HTML]{F0F0F0}{} & \cellcolor[HTML]{F0F0F0}{ } & \cellcolor[HTML]{F0F0F0}{R² = 0.093} & \cellcolor[HTML]{F0F0F0}{Sex-specific genetic effects} \\ 
+ & Sex (Male) & -1.31 (0.74) &  &  \\ 
+ & HI & -0.67 (0.83) &  &  \\ 
+ & Infection & 2.32 (0.80)** &  &  \\ 
+ & Sex × HI & \textbf{2.14 (0.83)*} &  & Males worsen with musculus ancestry \\ 
+ & HI × Infection & \textbf{-1.30 (0.84)} & AIC = 1409 &  \\ 
+\cellcolor[HTML]{F0F0F0}{\textbf{Model 4: Full factorial}} & \cellcolor[HTML]{F0F0F0}{} & \cellcolor[HTML]{F0F0F0}{ } & \cellcolor[HTML]{F0F0F0}{R² = 0.112} & \cellcolor[HTML]{F0F0F0}{Overparameterized} \\ 
+ & [15 parameters] & —  & AIC = 1413 &  \\ 
+\cellcolor[HTML]{F0F0F0}{\textbf{Model 5: Focused}} & \cellcolor[HTML]{F0F0F0}{} & \cellcolor[HTML]{F0F0F0}{ } & \cellcolor[HTML]{F0F0F0}{R² = 0.099} & \cellcolor[HTML]{F0F0F0}{Three-way interaction NS} \\ 
+ & [12 parameters] & —  & AIC = 1411 &  \\ 
+\cellcolor[HTML]{F0F0F0}{\textbf{Model 6: Species-specific}} & \cellcolor[HTML]{F0F0F0}{} & \cellcolor[HTML]{F0F0F0}{ } & \cellcolor[HTML]{F0F0F0}{R² = 0.147\textsuperscript{\textit{2}}} & \cellcolor[HTML]{F0F0F0}{Species matters but} \\ 
+ & E. falciformis & \textbf{5.22 (1.75)**} &  &  \\ 
+ & E. ferrisi & 1.43 (1.07) & n = 168 & reduced sample size \\ 
+\bottomrule
+\end{longtable}
+\begin{minipage}{\linewidth}
+\textsuperscript{\textit{1}}Key findings highlighted in bold. Significance: ***p < 0.001, **p < 0.01, *p < 0.05\\
+\textsuperscript{\textit{2}}AIC not comparable due to different sample size\\
+Model Selection: Best fit = Model 2 (lowest AIC); Most informative = Model 3 (biological insight); SE = standard error; NS = not significant\\
+\end{minipage}
+

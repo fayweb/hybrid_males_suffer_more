@@ -1,0 +1,28 @@
+\setlength{\LTpost}{0mm}
+\begin{longtable}{>{\raggedright\arraybackslash}p{180px}>{\raggedright\arraybackslash}p{140px}>{\centering\arraybackslash}p{100px}>{\centering\arraybackslash}p{140px}>{\raggedright\arraybackslash}p{200px}}
+\caption*{
+{\large Table 2. Linear regression analysis reveals sex-specific genetic effects} \\ 
+{\small Model progression from baseline to key biological finding}
+} \\ 
+\toprule
+Model & Predictors & β\textsuperscript{\textit{1}} & Model Fit & Key Finding \\ 
+\midrule\addlinespace[2.5pt]
+\cellcolor[HTML]{F0F0F0}{\textbf{Model 1: Baseline}} & \cellcolor[HTML]{F0F0F0}{} & \cellcolor[HTML]{F0F0F0}{ } & \cellcolor[HTML]{F0F0F0}{R² = 0.019} & \cellcolor[HTML]{F0F0F0}{No genetic effect alone} \\ 
+ & HI & -0.15 (0.67) &  &  \\ 
+ & He & -0.39 (2.04) & F = 1.94, p = 0.122 &  \\ 
+\cellcolor[HTML]{F0F0F0}{\textbf{Model 2: Main effects}} & \cellcolor[HTML]{F0F0F0}{} & \cellcolor[HTML]{F0F0F0}{ } & \cellcolor[HTML]{F0F0F0}{R² = 0.063} & \cellcolor[HTML]{F0F0F0}{Infection dominates} \\ 
+ & Infection & \textbf{1.12 (0.29)***} &  &  \\ 
+ & Sex (Male) & -0.09 (0.28) &  &  \\ 
+ & HI & 0.19 (0.41) &  &  \\ 
+ & He & 1.56 (1.01) & F = 5.05, p < 0.001 &  \\ 
+\cellcolor[HTML]{F0F0F0}{\textbf{Model 3: Key interactions}} & \cellcolor[HTML]{F0F0F0}{} & \cellcolor[HTML]{F0F0F0}{ } & \cellcolor[HTML]{F0F0F0}{R² = 0.093} & \cellcolor[HTML]{F0F0F0}{Males deteriorate with} \\ 
+ & Infection & \textbf{2.32 (0.80)**} &  &  \\ 
+ & Sex × HI & \textbf{2.14 (0.83)*} &  & M. m. musculus ancestry \\ 
+ & Sex × Infection & -0.37 (0.57) & F = 2.99, p = 0.001 &  \\ 
+\bottomrule
+\end{longtable}
+\begin{minipage}{\linewidth}
+\textsuperscript{\textit{1}}Significance: ***p < 0.001, **p < 0.01, *p < 0.05\\
+Selected model (Model 3) shows males increase predicted weight loss by 2.14\% per unit increase in M. m. musculus ancestry\\
+\end{minipage}
+
