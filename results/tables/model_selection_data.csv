@@ -1,0 +1,5 @@
+"Model","Description","K","LogLik","AIC","Delta_AIC","AIC_weight","Alpha_Male","Alpha_Female"
+"H1","Subspecies differences only",3,-151,308,0,0.565,"--","--"
+"H0","Null (no effects)",2,-152.9,309.8,1.8,0.23,"--","--"
+"H3","Sex × subspecies interaction",6,-149.2,310.4,2.4,0.17,"0.62 (0.03-1.21)","-0.45 (-1.09-0.19)"
+"H2","Sex differences only",4,-152.8,313.6,5.6,0.034,"--","--"

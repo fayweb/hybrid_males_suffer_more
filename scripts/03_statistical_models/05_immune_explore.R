@@ -27,11 +27,7 @@ available_genes <- immune_genes[immune_genes %in% names(field_mice)]
 cat("Available immune genes:", length(available_genes), "\n")
 
 # Create complete dataset with all interactions
-immune_data <- field_mice %>%
-  dplyr::select(Mouse_ID, HI, Sex, infection_status, predicted_weight_loss, species_Eimeria,
-                all_of(available_genes)) %>%
-  filter(!is.na(HI) & !is.na(Sex) & !is.na(infection_status) &
-           !is.na(predicted_weight_loss)) %>%
+field_mice <- field_mice %>%
   mutate(
     # Core variables
     Sex = factor(Sex, levels = c("F", "M")),
@@ -48,7 +44,15 @@ immune_data <- field_mice %>%
       HI > 0.8 ~ "Parental",
       TRUE ~ "Hybrid"
     )
-  )
+  ) %>%
+  drop_na(HI)
+
+# Create complete dataset with all interactions
+immune_data <- field_mice %>%
+  dplyr::select(Mouse_ID, HI, Sex, infection_status, predicted_weight_loss, species_Eimeria,
+                all_of(available_genes), infection) %>%
+  filter(!is.na(HI) & !is.na(Sex) & !is.na(infection_status) &
+           !is.na(predicted_weight_loss))
 
 immune_data$species_Eimeria <- factor(
   immune_data$species_Eimeria,
@@ -139,34 +143,50 @@ cat("3. TESTING MODEL STRUCTURES FOR PREDICTED WEIGHT LOSS\n")
 cat("====================================================\n")
 
 # Model 1: Simple HI × He
-model1 <- lm(predicted_weight_loss ~ HI * He, data = immune_data)
+model1 <- lm(predicted_weight_loss ~ HI * He, data = field_mice)
 summary(model1)
 
 # Model 2: Main effects only
-model2 <- lm(predicted_weight_loss ~ Sex + HI + He + infection, data = immune_data)
+model2 <- lm(predicted_weight_loss ~ Sex + HI + He + infection, data = field_mice)
 summary(model2)
 
 # Model 3: Two-way interactions
 model3 <- lm(predicted_weight_loss ~ Sex * HI + Sex * He + HI * He +
                Sex * infection + HI * infection + He * infection,
-             data = immune_data)
+             data = field_mice)
 summary(model3)
 
 # Model 4: Three-way interactions (full model)
-model4 <- lm(predicted_weight_loss ~ Sex * HI * He * infection, data = immune_data)
+model4 <- lm(predicted_weight_loss ~ Sex * HI * He * infection, data = field_mice)
 summary(model4)
 
 # Model 5: Focused model (biologically motivated)
 model5 <- lm(predicted_weight_loss ~ Sex * (HI + He) * infection + HI:He,
-             data = immune_data)
+             data = field_mice)
 
 summary(model5)
 
 # Model 3 updated: Two-way interactions using species_Eimeria instead of Sex and infection
 modele6 <- lm(predicted_weight_loss ~ species_Eimeria * HI * He,
-                     data = immune_data)
+                     data = field_mice)
 
 summary(modele6)
+
+
+# Compare models
+cat("Model comparison (AIC):\n")
+model_comparison <- data.frame(
+  Model = c("HI × He only", "Main effects", "Two-way", "Full three-way", "Focused"),
+  AIC = c(AIC(model1), AIC(model2), AIC(model3), AIC(model4), AIC(model5)),
+  df = c(model1$df.residual, model2$df.residual, model3$df.residual,
+         model4$df.residual, model5$df.residual)
+)
+print(model_comparison %>% arrange(AIC))
+
+# Select best model
+best_model <- model3  # or choose based on AIC
+cat("\nUsing focused model for further analysis\n")
+
 
 
 detailed_models <- data.frame(
@@ -320,6 +340,157 @@ table_detailed <- detailed_models %>%
 
 # Save the table
 save_table_all_formats(table_detailed, "table_S3_detailed_regression")
+
+
+# Calculate AIC values and model statistics
+# Note: Using the exact models from your output
+models <- list(
+  model1 = lm(predicted_weight_loss ~ HI * He, data = field_mice),  # n=335
+  model2 = lm(predicted_weight_loss ~ Sex + HI + He + infection, data = field_mice),  # n=304 (31 missing)
+  model3 = lm(predicted_weight_loss ~ Sex * HI + Sex * He + HI * He +
+                Sex * infection + HI * infection + He * infection, data = field_mice)  # n=304 (31 missing)
+)
+
+# Extract model information
+extract_model_info <- function(model, model_name) {
+  n_obs <- nobs(model)
+  k <- length(coef(model)) + 1  # +1 for residual variance
+  aic_val <- AIC(model)
+  loglik <- logLik(model)[1]
+
+  # Get key coefficients with 85% CIs (Proceedings B standard)
+  coef_summary <- summary(model)$coefficients
+
+  # Extract Sex×HI interaction if present
+  sex_hi_ci <- ""
+  if("SexM:HI" %in% rownames(coef_summary)) {
+    sex_hi_coef <- coef_summary["SexM:HI", "Estimate"]
+    se <- coef_summary["SexM:HI", "Std. Error"]
+    ci_lower <- sex_hi_coef - 1.44 * se
+    ci_upper <- sex_hi_coef + 1.44 * se
+    sex_hi_ci <- sprintf("%.2f (%.2f-%.2f)", sex_hi_coef, ci_lower, ci_upper)
+  }
+
+  # Extract infection coefficient if present
+  infection_ci <- ""
+  if("infectionInfected" %in% rownames(coef_summary)) {
+    infection_coef <- coef_summary["infectionInfected", "Estimate"]
+    se <- coef_summary["infectionInfected", "Std. Error"]
+    ci_lower <- infection_coef - 1.44 * se
+    ci_upper <- infection_coef + 1.44 * se
+    infection_ci <- sprintf("%.2f (%.2f-%.2f)", infection_coef, ci_lower, ci_upper)
+  }
+
+  # Extract HI×He interaction if present
+  hi_he_ci <- ""
+  if("HI:He" %in% rownames(coef_summary)) {
+    hi_he_coef <- coef_summary["HI:He", "Estimate"]
+    se <- coef_summary["HI:He", "Std. Error"]
+    ci_lower <- hi_he_coef - 1.44 * se
+    ci_upper <- hi_he_coef + 1.44 * se
+    hi_he_ci <- sprintf("%.2f (%.2f-%.2f)", hi_he_coef, ci_lower, ci_upper)
+  }
+
+  return(data.frame(
+    model = model_name,
+    n = n_obs,
+    k = k,
+    loglik = loglik,
+    aic = aic_val,
+    sex_hi_interaction = sex_hi_ci,
+    infection_effect = infection_ci,
+    hi_he_interaction = hi_he_ci,
+    stringsAsFactors = FALSE
+  ))
+}
+
+# Create model comparison dataframe
+model_data <- do.call(rbind, lapply(names(models), function(x) {
+  extract_model_info(models[[x]], x)
+}))
+
+# Calculate delta AIC and Akaike weights
+model_data$delta_aic <- model_data$aic - min(model_data$aic)
+model_data$akaike_weight <- exp(-0.5 * model_data$delta_aic) / sum(exp(-0.5 * model_data$delta_aic))
+
+# Create the final table for display
+proceedings_table_data <- data.frame(
+  Model = c("M1", "M2", "M3"),
+  Description = c(
+    "HI × He",
+    "Sex + HI + He + Infection",
+    "Sex × HI + interactions"
+  ),
+  n = model_data$n,
+  K = model_data$k,
+  LogLik = sprintf("%.1f", model_data$loglik),
+  AIC = sprintf("%.1f", model_data$aic),
+  Delta_AIC = sprintf("%.1f", model_data$delta_aic),
+  wi = sprintf("%.2f", model_data$akaike_weight),
+  Key_Parameters = c(
+    ifelse(model_data$hi_he_interaction[1] != "",
+           model_data$hi_he_interaction[1],
+           "--"),
+    ifelse(model_data$infection_effect[2] != "",
+           model_data$infection_effect[2],
+           "--"),
+    ifelse(model_data$sex_hi_interaction[3] != "",
+           model_data$sex_hi_interaction[3],
+           "--")
+  ),
+  stringsAsFactors = FALSE
+)
+
+# Create the gt table
+proceedings_table <- proceedings_table_data %>%
+  gt() %>%
+  cols_label(
+    Model = "Model",
+    Description = "Description",
+    n = "n",
+    K = "K",
+    LogLik = "LogLik",
+    AIC = "AIC",
+    Delta_AIC = "ΔAIC",
+    wi = "wi",
+    Key_Parameters = "Key Parameters (85% CI)"
+  ) %>%
+  # Highlight best model
+  tab_style(
+    style = list(
+      cell_fill(color = "#e3f2fd"),
+      cell_text(weight = "bold")
+    ),
+    locations = cells_body(rows = which.min(model_data$delta_aic))
+  ) %>%
+  # Center numeric columns
+  cols_align(
+    align = "center",
+    columns = c(n, K, LogLik, AIC, Delta_AIC, wi)
+  ) %>%
+  # Formatting
+  cols_width(
+    Model ~ px(60),
+    Description ~ px(180),
+    n ~ px(50),
+    K ~ px(50),
+    LogLik ~ px(80),
+    AIC ~ px(80),
+    Delta_AIC ~ px(80),
+    wi ~ px(60),
+    Key_Parameters ~ px(180)
+  ) %>%
+  tab_options(
+    table.font.size = 11,
+    table.border.top.style = "solid",
+    table.border.bottom.style = "solid"
+  )
+
+# Print the table
+proceedings_table
+
+# Save the table using the provided function
+save_table_all_formats(proceedings_table, "table_2_proceedings_b_model_selection")
 
 # Also create a simplified version for quick reference
 model_summary_supp <- data.frame(
