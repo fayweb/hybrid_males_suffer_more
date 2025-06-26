@@ -401,3 +401,176 @@ cat("- Color palettes: hybrid_colors, sex_colors, infection_colors\n\n")
 save.image(file.path("results", "chapter2_workspace.RData"))
 cat("Workspace saved to results/chapter2_workspace.RData\n")
 
+# Get version info for key packages
+sessionInfo()
+packageVersion("parasiteLoad")
+packageVersion("randomForest")
+packageVersion("mice")
+packageVersion("limma")
+packageVersion("pwr")
+packageVersion("spdep")
+
+
+
+# Create the comprehensive gene information table
+gene_data <- data.frame(
+  Gene = c("CXCL9", "TNF", "IDO1", "IFNγ", "IL-6", "TICAM1", "RETNLB",
+           "IRGM1", "SOCS1", "MUC2", "MPO", "IL1RN", "IL-10", "IL-13",
+           "NCR1", "PRF1", "TLR2", "TLR4", "ARG1"),
+
+  Full_Name = c("C-X-C motif chemokine ligand 9",
+                "Tumor necrosis factor",
+                "Indoleamine 2,3-dioxygenase 1",
+                "Interferon gamma",
+                "Interleukin 6",
+                "TIR domain-containing adapter molecule 1",
+                "Resistin-like beta",
+                "Immunity-related GTPase M",
+                "Suppressor of cytokine signaling 1",
+                "Mucin 2",
+                "Myeloperoxidase",
+                "Interleukin 1 receptor antagonist",
+                "Interleukin 10",
+                "Interleukin 13",
+                "Natural cytotoxicity receptor 1",
+                "Perforin 1",
+                "Toll-like receptor 2",
+                "Toll-like receptor 4",
+                "Arginase 1"),
+
+  Function = c("T cell recruitment, IFN-γ-inducible",
+               "Pro-inflammatory, induces cachexia",
+               "Tryptophan depletion, immunosuppression",
+               "Th1 master regulator, parasite control",
+               "Acute phase response, inflammation",
+               "TLR adaptor, viral response",
+               "Th2 effector, goblet cell hyperplasia",
+               "Autophagy, parasite resistance",
+               "Negative feedback, prevents tissue damage",
+               "Intestinal barrier, pathogen exclusion",
+               "Oxidative burst, neutrophil marker",
+               "IL-1 antagonist, limits inflammation",
+               "Anti-inflammatory, regulatory",
+               "Th2 cytokine, mucus production",
+               "NK cell activation receptor",
+               "Cytolytic granule protein",
+               "Bacterial recognition",
+               "LPS sensor, innate immunity",
+               "M2 macrophage marker, tissue repair"),
+
+  Category = c("Chemokine", "Cytokine", "Metabolic enzyme", "Cytokine", "Cytokine",
+               "Innate signaling", "Th2 response", "Cell-autonomous", "Regulatory",
+               "Barrier", "Innate effector", "Regulatory", "Regulatory", "Th2 response",
+               "Cytotoxic", "Cytotoxic", "Pattern recognition", "Pattern recognition",
+               "Metabolic enzyme"),
+
+  Response_Type = c("Th1", "Inflammatory", "Regulatory", "Th1", "Inflammatory",
+                    "Innate", "Th2", "Cell-autonomous", "Regulatory", "Barrier",
+                    "Innate", "Regulatory", "Regulatory", "Th2", "Cytotoxic",
+                    "Cytotoxic", "Innate", "Innate", "Th2/Regulatory")
+)
+
+# Create the beautiful GT table
+gene_table <- gene_data %>%
+  gt() %>%
+
+  # Add title and subtitle
+  tab_header(
+    title = md("**Immune Gene Panel for Infection Response Prediction**"),
+    subtitle = md("*Nineteen genes quantified by high-throughput qPCR at day 8 post-infection*")
+  ) %>%
+
+  # Format column headers
+  cols_label(
+    Gene = md("**Gene**"),
+    Full_Name = md("**Full Name**"),
+    Function = md("**Primary Function**"),
+    Category = md("**Category**"),
+    Response_Type = md("**Response Type**")
+  ) %>%
+
+  # Group by response type
+  tab_row_group(
+    label = md("**Th1/Pro-inflammatory Response**"),
+    rows = Response_Type %in% c("Th1", "Inflammatory")
+  ) %>%
+  tab_row_group(
+    label = md("**Th2/Anti-helminth Response**"),
+    rows = Response_Type == "Th2"
+  ) %>%
+  tab_row_group(
+    label = md("**Regulatory/Anti-inflammatory**"),
+    rows = Response_Type %in% c("Regulatory", "Th2/Regulatory")
+  ) %>%
+  tab_row_group(
+    label = md("**Innate Immunity**"),
+    rows = Response_Type == "Innate"
+  ) %>%
+  tab_row_group(
+    label = md("**Cell-mediated Immunity**"),
+    rows = Response_Type %in% c("Cell-autonomous", "Cytotoxic", "Barrier")
+  ) %>%
+
+  # Style the table
+  tab_style(
+    style = list(
+      cell_fill(color = "#E8F4F8"),
+      cell_text(weight = "bold")
+    ),
+    locations = cells_row_groups()
+  ) %>%
+
+  # Highlight gene names
+  tab_style(
+    style = cell_text(weight = "bold", style = "italic"),
+    locations = cells_body(columns = Gene)
+  ) %>%
+
+  # Add alternating row colors
+  opt_row_striping() %>%
+
+  # Add borders
+  tab_options(
+    table.border.top.color = "black",
+    table.border.bottom.color = "black",
+    heading.border.bottom.color = "black",
+    column_labels.border.bottom.color = "black",
+    table_body.border.bottom.color = "black"
+  ) %>%
+
+  # Add footnote
+  tab_footnote(
+    footnote = md("Genes selected based on established roles in parasite immunity. Expression normalized using quantile normalization with GAPDH and PPIB as housekeeping genes."),
+    locations = cells_title()
+  ) %>%
+
+  # Add source note
+  tab_source_note(
+    source_note = md("**Source:** Webster et al. (2025) *in review*")
+  )
+
+gene_table
+
+# Save the table using your function
+save_table_all_formats(gene_table, "Table_S1_Immune_Genes")
+
+# Also create a simplified version for the main text if needed
+gene_table_simple <- gene_data %>%
+  dplyr::select(Gene, Function, Category) %>%
+  gt() %>%
+  tab_header(
+    title = md("**Immune Genes Used for Prediction**")
+  ) %>%
+  cols_label(
+    Gene = md("**Gene**"),
+    Function = md("**Function**"),
+    Category = md("**Category**")
+  ) %>%
+  tab_options(
+    table.font.size = 10,
+    table.width = pct(80)
+  )
+
+
+# Save simplified version
+save_table_all_formats(gene_table_simple, "Table_S1_Immune_Genes_Simple")

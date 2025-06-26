@@ -67,15 +67,31 @@ print(hi_coverage)
 
 # 4. SIMPLE PLOTS
 # Geographic distribution
+# Geographic distribution with white center
 p_geo <- ggplot(field_mice, aes(x = Longitude, y = Latitude)) +
   geom_point(aes(color = HI, shape = Sex), size = 3, alpha = 0.7) +
-  scale_color_gradient(low = "blue", high = "red", name = "Hybrid Index") +
+  scale_color_gradient2(low = "blue", mid = "white", high = "red",
+                        midpoint = 0.5, name = "Hybrid Index") +
   scale_shape_manual(values = c("F" = 16, "M" = 17)) +
   theme_minimal() +
   coord_fixed() +
-  labs(title = "Geographic Distribution by Hybrid Index and Sex")
+  labs(title = "")
 
 p_geo
+
+save_plot_all_formats(plot_object = p_geo, plot_name = "sex_hybrid_location_distribution")
+
+HIgradientBar <- ggplot(data.frame(hi = seq(0, 1, 0.0001)),
+                        aes(x = hi, y = 1, fill = hi)) +
+  geom_tile() +
+  scale_x_continuous(breaks = seq(0, 1, by = 0.25),
+                     labels = c("0", "0.25", "0.5", "0.75", "1")) +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0.5) +
+  theme_void() +
+  theme(legend.position = 'none',
+        plot.margin = unit(c(0, 0, 0, 0), "cm"),
+        axis.text.x = element_text(color = "black",
+                                   angle = 0, vjust = 0.5, hjust = 0.5))
 
 # HI distribution
 p_hist <- ggplot(field_mice, aes(x = HI, fill = Sex)) +
@@ -83,9 +99,24 @@ p_hist <- ggplot(field_mice, aes(x = HI, fill = Sex)) +
   scale_fill_manual(values = c("F" = "#4daf4a", "M" = "#ff7f00")) +
   theme_minimal() +
   labs(x = "Hybrid Index", y = "Count",
-       title = "Distribution Across Hybrid Index")
+       title = "") +
+  theme(legend.position = 'none',
+        #  legend.direction = "horizontal",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+
+p_hist <- p_hist / HIgradientBar +
+  plot_layout(heights = c(1, 0.1))
 
 p_hist
+
+save_plot_all_formats(plot_object = p_hist, plot_name = "sex_distribution_HI")
+
+
+
 
 # Weight vs HI
 p_weight <- ggplot(field_mice, aes(x = HI, y = Body_Weight, color = Sex)) +
@@ -93,14 +124,22 @@ p_weight <- ggplot(field_mice, aes(x = HI, y = Body_Weight, color = Sex)) +
   geom_smooth(method = "lm", se = TRUE) +
   scale_color_manual(values = c("F" = "#4daf4a", "M" = "#ff7f00")) +
   theme_minimal() +
-  labs(title = "Body Weight Across Hybrid Index",
-       x = "Hybrid Index", y = "Body Weight (g)")
+  labs(title = "",
+       x = "Hybrid Index", y = "Body Weight (g)") +
+  theme(legend.position = 'none',
+        #  legend.direction = "horizontal",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
 
 p_weight
-# Save plots
-ggsave("spatial_distribution.pdf", p_geo, width = 8, height = 6)
-ggsave("hi_distribution.pdf", p_hist, width = 8, height = 6)
-ggsave("weight_by_hi.pdf", p_weight, width = 8, height = 6)
+
+combined_p_weight <- p_weight / HIgradientBar +
+  plot_layout(heights = c(1, 0.1))
+
+combined_p_weight
+
+save_plot_all_formats(plot_object = combined_p_weight, plot_name = "body_weight_hybrid_index")
 
 # 5. FORMATTED TEXT FOR MANUSCRIPT
 cat("\n========== TEXT FOR METHODS SECTION ==========\n")
