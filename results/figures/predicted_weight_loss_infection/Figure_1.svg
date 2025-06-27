@@ -4051,6 +4051,12 @@
                             <rect x="96.148" y="23.059" width="67.223" height="63.609" style="fill:white;"/>
                         </g>
                         <g transform="matrix(4.16667,0,0,4.16667,0,0)">
+                            <text x="341.758px" y="34.926px" style="font-family:'Arial-ItalicMT', 'Arial', sans-serif;font-style:italic;font-size:9.958px;">No interaction</text>
+                        </g>
+                        <g transform="matrix(4.16667,0,0,4.16667,0,0)">
+                            <text x="354.344px" y="49.266px" style="font-family:'Arial-ItalicMT', 'Arial', sans-serif;font-style:italic;font-size:9.958px;">p = 0.52</text>
+                        </g>
+                        <g transform="matrix(4.16667,0,0,4.16667,0,0)">
                             <text x="26.199px" y="314.676px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:14px;fill:rgb(77,77,77);">0</text>
                         </g>
                         <g transform="matrix(4.16667,0,0,4.16667,0,0)">
