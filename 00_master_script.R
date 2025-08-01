@@ -363,7 +363,13 @@ if (RUN_ANALYSIS$statistical_models) {
     cat("Running additional male-specific analysis...\n")
     source(file.path("scripts", "03_statistical_models", "01_b_hybrid_analysis_male_effects.R"))
     cat("✓ Male-specific effects analysis completed\n\n")
+
+
   }
+
+
+  cat("Creating comprehensive model design table...\n")
+  source(file.path("scripts", "03_statistical_models", "08_design_table_model_overview.R"))
 
   # Summary of statistical findings
   cat("STATISTICAL ANALYSIS SUMMARY:\n")

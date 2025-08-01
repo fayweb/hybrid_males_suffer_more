@@ -1,0 +1,23 @@
+\newlength\holdLTleft\newlength\holdLTright\setlength\holdLTleft{\LTleft}\relax\setlength\holdLTright{\LTright}\relax\setlength\LTleft{0\linewidth}
+\setlength\LTright{0\linewidth}\setlength{\LTpost}{0mm}
+\begin{longtable}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}p{100px}>{\raggedright\arraybackslash}p{130px}>{\raggedright\arraybackslash}p{350px}>{\raggedright\arraybackslash}p{250px}>{\raggedright\arraybackslash}p{80px}>{\raggedright\arraybackslash}p{200px}>{\raggedright\arraybackslash}p{130px}}
+\toprule
+Model ID & Statistical Method & Model Formula & Analytical Purpose & Sample Size & Key Result & Analysis Phase \\ 
+\midrule\addlinespace[2.5pt]
+RF-FIELD & Random Forest\textsuperscript{\textit{1}} & Predicted\_WL \textasciitilde{} 19 immune genes (field application) & Generate immune-based health predictions & n = 335 & Range: 3.98-18.5\% predicted weight loss & Field Application \\ 
+PL-1 & parasiteLoad\textsuperscript{\textit{2}} & response \textasciitilde{} HI + hHe + α×hHe | Sex\textsuperscript{\textit{3}} & Test sex-specific hybrid dysfunction & n = 335 & \textbf{Sex-specific effects: p = 0.027} & Hybrid Analysis \\ 
+PL-2 & parasiteLoad\textsuperscript{\textit{2}} & response \textasciitilde{} HI + hHe + α×hHe | Sex (uninfected)\textsuperscript{\textit{3}} & Test constitutive hybrid costs & n = 171 & No constitutive costs: p = 0.544 & Hybrid Analysis \\ 
+PL-3 & parasiteLoad\textsuperscript{\textit{2}} & response \textasciitilde{} HI + hHe + α×hHe | Infection\_status\textsuperscript{\textit{3}} & Test infection dominance over genetics & n = 304 & \textbf{Infection dominance: p = 0.002} & Hybrid Analysis \\ 
+LM-1 & Linear Regression & Predicted\_WL \textasciitilde{} HI × hHe & Test genetic baseline effects & n = 335 & Non-significant: p = 0.44 & Linear Regression \\ 
+LM-2 & Linear Regression & Predicted\_WL \textasciitilde{} Sex + HI + hHe + Infection & Test main effects model & n = 304 & \textbf{Infection effect: p < 0.001} & Linear Regression \\ 
+LM-3 & Linear Regression & Predicted\_WL \textasciitilde{} Sex × HI + interactions & Test interaction effects & n = 304 & \textbf{Sex × HI: p = 0.011} & Linear Regression \\ 
+\bottomrule
+\end{longtable}
+\begin{minipage}{\linewidth}
+Bold = p < 0.05\\
+\textsuperscript{\textit{1}}Random Forest model from Webster et al. (in review)\\
+\textsuperscript{\textit{2}}parasiteLoad package implements Baird et al. (2012) framework\\
+\textsuperscript{\textit{3}}α represents deviation from additivity (positive = increased costs with M. m. musculus ancestry)\\
+\end{minipage}
+\setlength\LTleft{\holdLTleft}
+\setlength\LTright{\holdLTright}

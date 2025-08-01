@@ -1,0 +1,33 @@
+\setlength{\LTpost}{0mm}
+\begin{longtable}{>{\raggedright\arraybackslash}p{80px}>{\raggedright\arraybackslash}p{120px}>{\raggedright\arraybackslash}p{300px}>{\raggedright\arraybackslash}p{200px}>{\raggedright\arraybackslash}p{100px}>{\raggedright\arraybackslash}p{250px}>{\raggedright\arraybackslash}p{150px}}
+\caption*{
+{\large Complete Analytical Framework} \\ 
+{\small All statistical models used in hybrid dysfunction analysis}
+} \\ 
+\toprule
+Model\_ID & Model\_Type & Model\_Formula & Purpose & Sample\_Size & Key\_Result & Statistical\_Framework \\ 
+\midrule\addlinespace[2.5pt]
+\cellcolor[HTML]{E3F2FD}{RF-1} & \cellcolor[HTML]{E3F2FD}{Random Forest\textsuperscript{\textit{1}}} & \cellcolor[HTML]{E3F2FD}{Weight\_loss \textasciitilde{} 19 immune genes} & \cellcolor[HTML]{E3F2FD}{Train immune-health model} & \cellcolor[HTML]{E3F2FD}{n = 136} & \cellcolor[HTML]{E3F2FD}{47.6\% variance explained} & \cellcolor[HTML]{E3F2FD}{Machine learning} \\ 
+RF-2 & Random Forest\textsuperscript{\textit{1}} & Weight\_loss \textasciitilde{} 19 immune genes (train-test) & Validate predictive accuracy & n = 96 train, 40 test & r = 0.79, p < 0.001 & Train-test validation \\ 
+RF-3 & Random Forest\textsuperscript{\textit{1}} & Weight\_loss \textasciitilde{} 19 immune genes (cross-validation) & Bootstrap validation & n = 136 (99 iterations) & Stable performance across iterations & Bootstrap resampling \\ 
+RF-4 & Random Forest\textsuperscript{\textit{1}} & Weight\_loss \textasciitilde{} 19 immune genes (final model) & Final model for field application & n = 136 & CXCL9 most important predictor & Ensemble method \\ 
+\cellcolor[HTML]{F3E5F5}{FIELD-1} & \cellcolor[HTML]{F3E5F5}{Random Forest} & \cellcolor[HTML]{F3E5F5}{Predicted\_WL \textasciitilde{} 19 immune genes (field application)} & \cellcolor[HTML]{F3E5F5}{Apply to wild mice (n=335)} & \cellcolor[HTML]{F3E5F5}{n = 335} & \cellcolor[HTML]{F3E5F5}{Predicted WL: 3.98-18.5\%} & \cellcolor[HTML]{F3E5F5}{Predictive modeling} \\ 
+FIELD-2 & Random Forest & Model validation (infection status, species, intensity) & Validate field predictions & n = 185 (infection data) & Correlates with infection intensity, species, body condition & Correlation analysis \\ 
+\cellcolor[HTML]{E8F5E8}{PL-1} & \cellcolor[HTML]{E8F5E8}{parasiteLoad\textsuperscript{\textit{2}}} & \cellcolor[HTML]{E8F5E8}{response \textasciitilde{} HI + hHe + α×hHe | Sex (Complete dataset)} & \cellcolor[HTML]{E8F5E8}{Test sex-specific hybrid effects} & \cellcolor[HTML]{E8F5E8}{n = 335} & \cellcolor[HTML]{E8F5E8}{H3 vs H2: p = 0.027 (sex-specific effects)} & \cellcolor[HTML]{E8F5E8}{Nested hypothesis testing} \\ 
+PL-2 & parasiteLoad\textsuperscript{\textit{2}} & response \textasciitilde{} HI + hHe + α×hHe | Sex (Uninfected only) & Test constitutive hybrid costs & n = 171 & No constitutive costs: p = 0.544 & Nested hypothesis testing \\ 
+PL-3 & parasiteLoad\textsuperscript{\textit{2}} & response \textasciitilde{} HI + hHe + α×hHe | Infection (Infection dominance) & Test infection vs genetic effects & n = 304 & Infection dominance: p = 0.002 & Nested hypothesis testing \\ 
+PL-4 & parasiteLoad\textsuperscript{\textit{2}} & response \textasciitilde{} HI + hHe + α×hHe | Sex (Infected only) & Test infection-specific hybrid costs & n = 133 & Trend in infected mice: p = 0.027 & Nested hypothesis testing \\ 
+PL-5 & parasiteLoad\textsuperscript{\textit{2}} & response \textasciitilde{} HI + hHe + α×hHe | Sex (Males only) & Confirm male-specific effects & n = 153 & Male hybrid dysfunction: α = 0.82, p = 0.038 & Nested hypothesis testing \\ 
+PL-6 & parasiteLoad\textsuperscript{\textit{2}} & response \textasciitilde{} HI + hHe + α×hHe | Sex (Females only) & Confirm female protection & n = 151 & No female effects: p = 0.189 & Nested hypothesis testing \\ 
+\cellcolor[HTML]{FFF3E0}{LM-1} & \cellcolor[HTML]{FFF3E0}{Linear Regression} & \cellcolor[HTML]{FFF3E0}{Predicted\_WL \textasciitilde{} HI × hHe} & \cellcolor[HTML]{FFF3E0}{Test genetic baseline effects} & \cellcolor[HTML]{FFF3E0}{n = 335} & \cellcolor[HTML]{FFF3E0}{Non-significant baseline: p = 0.44} & \cellcolor[HTML]{FFF3E0}{Linear modeling} \\ 
+LM-2 & Linear Regression & Predicted\_WL \textasciitilde{} Sex + HI + hHe + Infection & Test main effects model & n = 304 & Infection main effect: p < 0.001 & Linear modeling \\ 
+LM-3 & Linear Regression & Predicted\_WL \textasciitilde{} Sex × HI + Sex × hHe + HI × hHe + Sex × Infection + HI × Infection + hHe × Infection & Test interaction effects (best model) & n = 304 & Sex × HI: β = 2.144, p = 0.011 & Linear modeling \\ 
+LM-4 & Linear Regression & Predicted\_WL \textasciitilde{} Sex × HI × hHe × Infection (full model) & Test full interaction model & n = 304 & Complex interactions not significant & Linear modeling \\ 
+LM-5 & Linear Regression & Predicted\_WL \textasciitilde{} Sex × (HI + hHe) × Infection + HI:hHe (focused) & Test biologically focused model & n = 304 & Focused model intermediate fit & Linear modeling \\ 
+\bottomrule
+\end{longtable}
+\begin{minipage}{\linewidth}
+\textsuperscript{\textit{1}}Random Forest models from Webster et al. (in review)\\
+\textsuperscript{\textit{2}}parasiteLoad package implements Baird et al. (2012) framework\\
+\end{minipage}
+
