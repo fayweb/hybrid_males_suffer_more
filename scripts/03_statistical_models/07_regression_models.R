@@ -47,6 +47,9 @@ field_mice <- field_mice %>%
   ) %>%
   drop_na(HI)
 
+
+
+
 # Create complete dataset with all interactions
 immune_data <- field_mice %>%
   dplyr::select(Mouse_ID, HI, Sex, infection_status, predicted_weight_loss, species_Eimeria,
@@ -606,4 +609,13 @@ figure1 <- grid.arrange(panel_a, panel_b, panel_c, panel_d,
                         ncol = 2, nrow = 2,
                         padding = unit(0.5, "line"))
 
+# Model 3: Two-way interactions uninfected
 
+# Create uninfected subset for constitutive cost analysis
+uninfected_data <- field_mice %>%
+  filter(infection_status == "FALSE")
+
+model3_uninfected <- lm(predicted_weight_loss ~ Sex * HI + Sex * He + HI * He +
+               Sex  + HI  + He,
+             data = uninfected_data)
+summary(model3_uninfected)
