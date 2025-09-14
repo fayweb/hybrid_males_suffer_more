@@ -533,3 +533,107 @@ table_minimal <- summary_data %>%
 
 print(table_minimal)
 
+
+
+# 1) Annotation dictionary keyed by your assay names (immune_genes)
+gene_annot <- tibble::tribble(
+  ~Gene,    ~Display, ~Full_Name,                                             ~Function,                                             ~Category,                 ~Response_Type,
+  "IFNy",   "IFN-γ",  "Interferon gamma",                                     "Th1 master regulator; parasite control",              "Cytokine",               "Th1",
+  "CXCR3",  "CXCR3",  "C-X-C chemokine receptor 3",                           "T cell trafficking to inflamed tissues",              "Chemokine receptor",     "Th1",
+  "IL.6",   "IL-6",   "Interleukin 6",                                        "Acute phase response; inflammation",                  "Cytokine",               "Inflammatory",
+  "IL.13",  "IL-13",  "Interleukin 13",                                       "Th2 cytokine; mucus production",                      "Th2 response",           "Th2",
+  "IL1RN",  "IL1RN",  "Interleukin 1 receptor antagonist",                    "IL-1 antagonist; limits inflammation",                "Regulatory",             "Regulatory",
+  "CASP1",  "CASP1",  "Caspase-1",                                            "Inflammasome effector; IL-1β maturation",             "Inflammasome",           "Innate",
+  "CXCL9",  "CXCL9",  "C-X-C motif chemokine ligand 9",                       "T cell recruitment; IFN-γ inducible",                 "Chemokine",              "Th1",
+  "IDO1",   "IDO1",   "Indoleamine 2,3-dioxygenase 1",                        "Tryptophan catabolism; immunoregulation",             "Metabolic enzyme",       "Regulatory",
+  "IRGM1",  "IRGM1",  "Immunity-related GTPase M",                            "Cell-autonomous defense; autophagy",                  "Cell-autonomous",        "Cell-autonomous",
+  "MPO",    "MPO",    "Myeloperoxidase",                                      "Oxidative burst; neutrophil marker",                  "Innate effector enzyme", "Innate",
+  "MUC2",   "MUC2",   "Mucin 2",                                              "Intestinal barrier; pathogen exclusion",              "Barrier (mucin)",        "Barrier",
+  "MUC5AC", "MUC5AC", "Mucin 5AC",                                            "Goblet cell mucin; barrier",                          "Barrier (mucin)",        "Barrier",
+  "MYD88",  "MYD88",  "Myeloid differentiation primary response 88",          "TLR/IL-1 signaling adaptor",                          "Innate signaling",       "Innate",
+  "NCR1",   "NCR1",   "Natural cytotoxicity receptor 1",                      "NK cell activation receptor",                         "Cytotoxic receptor",     "Cytotoxic",
+  "PRF1",   "PRF1",   "Perforin 1",                                           "Cytolytic granule pore-former",                       "Cytotoxic effector",     "Cytotoxic",
+  "RETNLB", "RETNLB", "Resistin-like beta",                                   "Type 2 effector; goblet cell hyperplasia",            "Th2 effector",           "Th2",
+  "SOCS1",  "SOCS1",  "Suppressor of cytokine signaling 1",                   "Negative feedback on JAK/STAT",                       "Regulatory",             "Regulatory",
+  "TICAM1", "TICAM1", "TIR-domain-containing adaptor molecule 1 (TRIF)",      "TLR3/4 adaptor; antiviral",                           "Innate signaling",       "Innate",
+  "TNF",    "TNF",    "Tumor necrosis factor",                                "Pro-inflammatory; cachexia",                          "Cytokine",               "Inflammatory"
+)
+
+# 2) Build the table in the exact order of your immune_genes vector
+gene_data <- tibble::tibble(Gene = immune_genes) %>%
+  dplyr::left_join(gene_annot, by = "Gene") %>%
+  dplyr::mutate(Gene = dplyr::coalesce(Display, Gene)) %>%
+  dplyr::select(Gene, Full_Name, Function, Category, Response_Type)
+
+# Sanity check: fail fast if any annotation is missing
+if (any(is.na(gene_data$Full_Name))) {
+  missing <- immune_genes[is.na(gene_data$Full_Name)]
+  stop(paste("Missing annotations for:", paste(missing, collapse = ", ")))
+}
+
+# 3) Make the GT table (same styling as before)
+gene_table <- gene_data %>%
+  gt::gt() %>%
+  gt::tab_header(
+    title   = gt::md("**Immune Gene Panel for Infection Response Prediction**"),
+    subtitle= gt::md("*Nineteen genes quantified by high-throughput qPCR at day 8 post-infection*")
+  ) %>%
+  gt::cols_label(
+    Gene          = gt::md("**Gene**"),
+    Full_Name     = gt::md("**Full Name**"),
+    Function      = gt::md("**Primary Function**"),
+    Category      = gt::md("**Category**"),
+    Response_Type = gt::md("**Response Type**")
+  ) %>%
+  gt::tab_row_group(label = gt::md("**Th1/Pro-inflammatory Response**"),
+                    rows  = Response_Type %in% c("Th1","Inflammatory")) %>%
+  gt::tab_row_group(label = gt::md("**Th2/Anti-helminth Response**"),
+                    rows  = Response_Type == "Th2") %>%
+  gt::tab_row_group(label = gt::md("**Regulatory/Anti-inflammatory**"),
+                    rows  = Response_Type == "Regulatory") %>%
+  gt::tab_row_group(label = gt::md("**Innate Immunity**"),
+                    rows  = Response_Type == "Innate") %>%
+  gt::tab_row_group(label = gt::md("**Cell-mediated Immunity**"),
+                    rows  = Response_Type %in% c("Cell-autonomous","Cytotoxic","Barrier")) %>%  # keeps your original grouping
+  gt::tab_style(
+    style = list(gt::cell_fill(color = "#E8F4F8"), gt::cell_text(weight = "bold")),
+    locations = gt::cells_row_groups()
+  ) %>%
+  gt::tab_style(
+    style = gt::cell_text(weight = "bold", style = "italic"),
+    locations = gt::cells_body(columns = "Gene")
+  ) %>%
+  gt::opt_row_striping() %>%
+  gt::tab_options(
+    table.border.top.color = "black",
+    table.border.bottom.color = "black",
+    heading.border.bottom.color = "black",
+    column_labels.border.bottom.color = "black",
+    table_body.border.bottom.color = "black"
+  ) %>%
+  gt::tab_footnote(
+    footnote  = gt::md("Genes match Chapter 1 assay symbols (e.g., `IFNy`, `IL.6`, `IL.13`). Display names use standard notation (e.g., IFN-γ, IL-6, IL-13). Expression normalized via quantile normalization with GAPDH and PPIB."),
+    locations = gt::cells_title()
+  ) %>%
+  gt::tab_source_note(
+    source_note = gt::md("**Source:** Webster et al. (2025) *in review*")
+  )
+
+
+# Save the table using your function
+save_table_all_formats(gene_table, "Table_S1_Immune_Genes")
+
+# 4) Optional simplified version for main text
+gene_table_simple <- gene_data %>%
+  dplyr::select(Gene, Function, Category) %>%
+  gt::gt() %>%
+  gt::tab_header(title = gt::md("**Immune Genes Used for Prediction**")) %>%
+  gt::cols_label(
+    Gene     = gt::md("**Gene**"),
+    Function = gt::md("**Function**"),
+    Category = gt::md("**Category**")
+  ) %>%
+  gt::tab_options(table.font.size = 10, table.width = gt::pct(80))
+
+save_table_all_formats(gene_table_simple, "Table_S1_Immune_Genes_Simple")
+

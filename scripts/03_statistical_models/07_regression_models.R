@@ -619,3 +619,4 @@ model3_uninfected <- lm(predicted_weight_loss ~ Sex * HI + Sex * He + HI * He +
                Sex  + HI  + He,
              data = uninfected_data)
 summary(model3_uninfected)
+
