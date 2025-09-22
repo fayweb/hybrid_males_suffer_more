@@ -620,3 +620,15 @@ model3_uninfected <- lm(predicted_weight_loss ~ Sex * HI + Sex * He + HI * He +
              data = uninfected_data)
 summary(model3_uninfected)
 
+
+library(ggfortify)
+p <- autoplot(model3, which = 1:4, ncol = 2)
+
+dir.create("Results/Figures/supplementary", recursive = TRUE, showWarnings = FALSE)
+
+grDevices::cairo_pdf("results/figures/Supp_Fig4_model3_diagnostics.pdf",
+                     width = 7.5, height = 7.5)
+par(mfrow = c(2,2), mar = c(4,4,2,1))
+plot(model3)     # Residuals vs Fitted, QQ, Scale-Location, Residuals vs Leverage
+dev.off()
+
